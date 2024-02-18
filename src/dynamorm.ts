@@ -1,8 +1,9 @@
 import 'reflect-metadata';
-import Table from "./table";
 import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
 import Model from "./model";
 import {Entity} from "../index";
+import Table from "./table";
+import {ModelConstructor} from "./types";
 
 /**
  * @todo throw error if tables or client is undefined
@@ -12,7 +13,7 @@ class DynamoRM {
   private readonly models: Array<any>
   private readonly client: DynamoDBClient;
 
-  constructor(App) {
+  constructor(App: Function) {
     this.tables = Reflect.getMetadata('tables', App)
     this.models = Reflect.getMetadata('models', App)
     this.client = Reflect.getMetadata('client', App);
@@ -25,7 +26,7 @@ class DynamoRM {
     return this.tables;
   }
 
-  getTable(tableName) {
+  getTable(tableName: string): Table {
     for (let table of this.tables) {
       if (tableName === table.name) {
         return table;
@@ -33,11 +34,11 @@ class DynamoRM {
     }
   }
 
-  getModels(): Array<Model> {
+  getModels(): Array<ModelConstructor> {
     return this.models;
   }
 
-  getModel(modelName) {
+  getModel(modelName: string): ModelConstructor {
     for (let model of this.models) {
        if (modelName == model.name) {
          return model;
@@ -47,7 +48,7 @@ class DynamoRM {
 
   private entityToModel(EntityConstructor: typeof Entity): Model {
     const attributeDefinitions = Reflect.getMetadata('attributes', EntityConstructor.prototype);
-    const reducer = (attributes, attribute) => {
+    const reducer = (attributes: Record<string, any>, attribute: string) => {
       attributes = {...attributes, [attribute]: undefined}
       return attributes;
     }
@@ -60,12 +61,12 @@ class DynamoRM {
     return new EntityModel();
   }
 
-  model(modelName, attributes?:Record<string, any>):Model {
-    let ModelConstructor = this.getModel(modelName);
+  model(modelName: string, attributes?:Record<string, any>):Model {
+    let Constructor:ModelConstructor = this.getModel(modelName);
     let model:Model;
 
-    if (ModelConstructor) {
-      model = new ModelConstructor();
+    if (Constructor) {
+      model = new Constructor();
     } else {
       for (let table of this.tables) {
         const entities = table.getEntities();
@@ -87,7 +88,7 @@ class DynamoRM {
   }
 }
 
-export const create = (App) => {
+export const create = (App: Function) => {
   return new DynamoRM(App);
 }
 

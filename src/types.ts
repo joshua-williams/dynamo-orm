@@ -5,6 +5,8 @@ import Model from "./model";
 
 export interface EntityAttributes extends Record<string|symbol, any> {}
 
+export type Attributes = Record<string, any>;
+
 export type AttributeDefinition = {
   type: string,
   required?: boolean,
@@ -34,12 +36,16 @@ export type PrimaryKey = {
   sk?: string,
 }
 
+export type TableConstructor = new() => Table;
+
 export type TableOptions = {
   name: string,
   primaryKey: PrimaryKey
   autoCreate?: boolean,
   entities: Array<Entity>
 }
+
+export type ModelConstructor = new() => Model
 
 export type ModelOptions = {
   entities: Array<Entity>

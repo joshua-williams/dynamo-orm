@@ -1,80 +1,116 @@
 # DynamoRM
 DynamoRM is an object-relational mapper (ORM) for interacting with DynamoDB.
-
-### Entity
-
+### Define an Entity
+An entity defines all attributes associated with a single DynamoDB table.
 
 `entities.ts`
 
 ```typescript
-import {Entity} from 'dynamorm'
-import {Attribute} from 'dynamorm/decorators'
+import {Entity, attribute} from "dynamorm";
 
-class UserEntity extends Entity {
-  @Attribute()
+export class AuthorEntity extends Entity {
+  @attribute()
   private firstName;
 
-  @Attribute()
+  @attribute()
   private lastName;
 
-  @Attribute()
+  @attribute()
   private email;
+
+  @attribute()
+  private image;
+
+  @attribute()
+  private about;
+
+  @attribute()
+  private socialMediaLinks;
 }
 ```
+The `@attribute` decorator accepts two parameters
+- type: AttributeType - default AttributeType.String
+- required: boolean - default false
+
+```typescript
+import {AttributeType, attribute} from "dynamorm";
+import {AttributeRequired} from "./types";
+
+...
+@attribute(AttributeType.Number, AttributeRequired)
+private age;
+...
+```
+
 
 ### Define a Table
 This table uses `email` as the partition key with no sort key.
-`DemoTable.ts`
+
+`tables.ts`
 ```typescript
-import { Table } from ".dynamorm/decorators";
-import { Table } from "dynamorm";
-import UserEntity from "./UserEntity";
+import {Table, table} from "dynamorm";
 
-@Table({
-  name: 'DemoTable',
+@table({
+  name: 'Authors',
   primaryKey: {pk: 'email'},
-  entities: [UserEntity]
+  entities: [AuthorEntity]
 })
-class DemoTable extends Table {}
-
-export default DemoTable
-
+export class AuthorTable extends Table {}
 ```
 
-### Save User To Database
+### Bootstrap DynamoRM
+
+DynamoRM wraps your database code in an object that exposes an easy to use api. This is the entry point for interacting
+with DynamoDB service.
+
+`db.ts`
+
+```typescript
+import {Dynamorm, dynamorm} from "dynamorm"
+
+dynamorm({
+  client: new DynamoDBClient(),
+  tables: [AuthorTable]
+})
+class Db {}
+
+const db = Dynamorm.create(Db)
+
+export default db
+```
+
+### Save To Database
+Entities are automatically converted to 
 `index.ts`
 
 ```typescript
-import DemoTable from './DemoTable';
+import db from './db'
 
-const userAttributes = new UserEntity({
-  firstName: 'Jack',
-  lastName: 'Black',
-  email: 'jack@black.com'
-});
-
-const table = new DemoTable();
-const user = table.entity('UserEntity', userAttributes);
-user.save();
-
+const model = db.model('AuthorEntity');
+model.set('fistName', 'Jack')
+model.set('lastName', 'black')
+model.set('email', 'jack@black.com')
+model.save()
+.catch(() => {
+  console.log("Houston, there's a problem!")
+})
 ```
 
 ### Get Item By Primary Key
 ```typescript
-import DemoTable from './DemoTable';
-const table = new DemoTable();
-const user = table.entity('UserEntity');
+...
+const user = db.model('AuthorEntity');
 const jack = user.find('jack@black.com')
 ```
 
 ### Delete Item
 ```typescript
-import DemoTable from './DemoTable';
-const table = new DemoTable();
-const jack = table.entity('UserEntity');
+...
+const jack = db.model('AuthorEntity');
 jack.set('email', 'jack@black.com')
 jack.delete();
 ```
+
 ### Testing
 The test suite relies on [DynamoDB Local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html) 
 as a [Docker image](https://hub.docker.com/r/amazon/dynamodb-local) so Docker must be installed and running.

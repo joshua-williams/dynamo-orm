@@ -1,6 +1,6 @@
 import Entity from "./entity";
+import { Attributes } from "./types";
 
-type Attributes = Record<string, any>;
 
 class Model {
   public name: string;
@@ -60,4 +60,5 @@ class Model {
     return this.entities;
   }
 }
+
 export default Model
