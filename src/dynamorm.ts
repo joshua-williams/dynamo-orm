@@ -53,7 +53,7 @@ class DynamoRM {
       return attributes;
     }
     const attributes = Object.keys(attributeDefinitions).reduce(reducer, {})
-    const EntityModel = class extends Model {
+    class EntityModel extends Model {
       protected entities: Array<Entity> = [EntityConstructor.prototype];
       protected attributes = attributes
     };

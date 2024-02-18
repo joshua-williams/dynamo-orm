@@ -45,6 +45,7 @@ describe('app', () => {
         author: undefined,
         image: undefined
       }
+      expect(model.constructor.name).toBe('EntityModel')
       expect(attributes).toMatchObject(expectedAttributes);
       expect(model).toBeInstanceOf(Model)
     })
