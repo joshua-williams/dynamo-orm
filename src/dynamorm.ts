@@ -2,6 +2,8 @@ import 'reflect-metadata';
 import Table from "./table";
 import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
 import Model from "./model";
+import {Entity} from "../index";
+
 /**
  * @todo throw error if tables or client is undefined
  */
@@ -43,38 +45,44 @@ class DynamoRM {
     }
   }
 
+  private entityToModel(EntityConstructor: typeof Entity): Model {
+    const attributeDefinitions = Reflect.getMetadata('attributes', EntityConstructor.prototype);
+    const reducer = (attributes, attribute) => {
+      attributes = {...attributes, [attribute]: undefined}
+      return attributes;
+    }
+    const attributes = Object.keys(attributeDefinitions).reduce(reducer, {})
+    const EntityModel = class extends Model {
+      protected attributes = attributes
+    };
+    Object.assign(EntityModel.prototype, Entity);
+    return new EntityModel();
+  }
+
   model(modelName, attributes?:Record<string, any>):Model {
-    let model = this.getModel(modelName);
-    if (model) {
-      const m = new model();
-      m.init();
-      if (attributes) {
-        m.fill(attributes);
-      }
-      return m;
-    }
-    for (let table of this.tables) {
-      const entities = table.getEntities();
-      if (entities[modelName]) {
-        const Entity = entities[modelName];
-        const attributeDefinitions = Reflect.getMetadata('attributes', Entity.prototype);
-        const reducer = (attributes, attribute) => {
-          attributes = {...attributes, [attribute]: undefined}
-          return attributes;
+    let ModelConstructor = this.getModel(modelName);
+    let model:Model;
+
+    if (ModelConstructor) {
+      model = new ModelConstructor();
+    } else {
+      for (let table of this.tables) {
+        const entities = table.getEntities();
+        if (entities[modelName]) {
+          const EntityConstructor = entities[modelName];
+          model = this.entityToModel(EntityConstructor);
+          break;
         }
-        const attributes = Object.keys(attributeDefinitions).reduce(reducer, {})
-        const EntityModel = class extends Model {
-          protected attributes = attributes
-        };
-        Object.assign(EntityModel.prototype, Entity);
-        const model = new EntityModel();
-        model.init();
-        if (attributes) {
-          model.fill(attributes);
-        }
-        return model;
       }
     }
+
+    if (!model) return;
+    model.init();
+    if (attributes) {
+      model.fill(attributes);
+    }
+
+    return model;
   }
 }
 
