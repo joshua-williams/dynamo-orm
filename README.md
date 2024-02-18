@@ -1,5 +1,5 @@
-# DynamoRM
-DynamoRM is an object-relational mapper (ORM) for interacting with DynamoDB.
+# DynamORM
+DynamORM is an object-relational mapper (ORM) for interacting with DynamoDB.
 ### Define an Entity
 An entity defines all attributes associated with a single DynamoDB table.
 
@@ -58,9 +58,9 @@ import {Table, table} from "dynamorm";
 export class AuthorTable extends Table {}
 ```
 
-### Bootstrap DynamoRM
+### Bootstrap DynamORM
 
-DynamoRM wraps your database code in an object that exposes an easy to use api. This is the entry point for interacting
+DynamORM wraps your database code in an object that exposes an easy to use api. This is the entry point for interacting
 with DynamoDB service.
 
 `db.ts`
