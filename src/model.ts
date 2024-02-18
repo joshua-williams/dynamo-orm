@@ -55,5 +55,9 @@ class Model {
   public getAttributes() {
     return this.attributes;
   }
+
+  public getEntities() {
+    return this.entities;
+  }
 }
 export default Model
