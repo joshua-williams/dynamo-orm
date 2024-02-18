@@ -8,6 +8,6 @@ import {AuthorModel, CookbookModel} from "./models";
   tables: [AuthorTable, CookbookTable, RecipeTable],
   models: [CookbookModel, AuthorModel]
 })
-class App {}
+class Db {}
 
-export default Dynamorm.create(App)
+export default Dynamorm.create(Db)
