@@ -3,7 +3,7 @@ import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
 import Model from "./model";
 import {Entity} from "../index";
 import Table from "./table";
-import {ModelConstructor} from "./types";
+import {EntityConstructor, ModelConstructor, TableConstructor} from "./types";
 
 /**
  * @todo throw error if tables or client is undefined
@@ -26,11 +26,21 @@ class DynamoRM {
     return this.tables;
   }
 
-  getTable(tableName: string): Table {
+  getTable(tableName: string): TableConstructor {
     for (let table of this.tables) {
       if (tableName === table.name) {
         return table;
       }
+    }
+  }
+
+  createTable(table: Table) {
+
+  }
+
+  createTables() {
+    for ( let table of this.tables ) {
+      this.createTable(table)
     }
   }
 
@@ -46,15 +56,15 @@ class DynamoRM {
     }
   }
 
-  private entityToModel(EntityConstructor: typeof Entity): Model {
-    const attributeDefinitions = Reflect.getMetadata('attributes', EntityConstructor.prototype);
+  private entityToModel(Constructor: EntityConstructor): Model {
+    const attributeDefinitions = Reflect.getMetadata('attributes', Constructor.prototype);
     const reducer = (attributes: Record<string, any>, attribute: string) => {
       attributes = {...attributes, [attribute]: undefined}
       return attributes;
     }
     const attributes = Object.keys(attributeDefinitions).reduce(reducer, {})
     class EntityModel extends Model {
-      protected entities: Array<Entity> = [EntityConstructor.prototype];
+      protected entities: Array<EntityConstructor> = [Constructor.prototype];
       protected attributes = attributes
     };
     Object.assign(EntityModel.prototype, Entity);
@@ -69,9 +79,8 @@ class DynamoRM {
       model = new Constructor();
     } else {
       for (let table of this.tables) {
-        const entities = table.getEntities();
-        if (entities[modelName]) {
-          const EntityConstructor = entities[modelName];
+        const EntityConstructor = table.getEntity();
+        if (EntityConstructor.name == modelName) {
           model = this.entityToModel(EntityConstructor);
           break;
         }

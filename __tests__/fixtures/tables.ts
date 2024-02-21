@@ -5,7 +5,7 @@ import {Table, table} from "../../index";
 @table({
   name: 'Authors',
   primaryKey: {pk: 'email'},
-  entities: [AuthorEntity]
+  entity: AuthorEntity
 })
 export class AuthorTable extends Table {}
 
@@ -13,7 +13,7 @@ export class AuthorTable extends Table {}
 @table({
   name: 'Cookbooks',
   primaryKey: {pk: 'title', sk: 'author'},
-  entities: [CookbookEntity]
+  entity: CookbookEntity
 })
 export class CookbookTable extends Table {}
 
@@ -22,7 +22,7 @@ export class CookbookTable extends Table {}
 @table({
   name: 'Recipes',
   primaryKey: {pk: 'id'},
-  entities: [RecipeEntity]
+  entity: RecipeEntity
 })
 export class RecipeTable extends Table {}
 

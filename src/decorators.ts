@@ -8,14 +8,7 @@ export function table(options:TableOptions) {
   return function(constructor) {
     Reflect.defineMetadata("name", options.name, constructor);
     Reflect.defineMetadata("primaryKey", options.primaryKey, constructor);
-    if (options.entities) {
-      const reducer = (entities, entity) => {
-        entities[entity.name] = entity;
-        return entities;
-      }
-      const entities = options.entities.reduce(reducer, {});
-      Reflect.defineMetadata('entities', entities, constructor)
-    }
+    Reflect.defineMetadata("entity", options.entity, constructor);
   }
 }
 

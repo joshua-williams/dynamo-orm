@@ -97,4 +97,12 @@ describe('app', () => {
     })
 
   })
+
+  describe('table creation', () => {
+    it('should create table', async () => {
+      let table = db.getTable('CookbookTable');
+    })
+
+    it('should create all tables', () => {})
+  })
 })
