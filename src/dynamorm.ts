@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
+import {CreateTableCommand, DynamoDBClient, ResourceInUseException} from "@aws-sdk/client-dynamodb";
 import Model from "./model";
 import {Entity} from "../index";
 import Table from "./table";
@@ -34,14 +34,34 @@ class DynamoRM {
     }
   }
 
-  createTable(table: Table) {
+  async createTable(tableConstructor: TableConstructor): Promise<any> {
+    const table = new tableConstructor();
+    const commandInput = table.toCreateCommandInput();
+    // @ts-ignore
+    const command = new CreateTableCommand(commandInput);
+    let response;
+    let message = `Failed to save table ${table.constructor.name}`
+    try {
+      response = await this.client.send(command);
+    } catch ( e ) {
 
+      switch ( e.constructor ) {
+        case ResourceInUseException:
+          message = `Table already exists "${table.constructor.name}"`
+          break;
+      }
+      throw new Error(message);
+    }
+    return response;
   }
 
-  createTables() {
-    for ( let table of this.tables ) {
-      this.createTable(table)
+  public async createTables() {
+    const results = [];
+    for ( let Constructor of this.tables ) {
+      const result = await this.createTable(Constructor)
+      results.push(result);
     }
+    return results;
   }
 
   getModels(): Array<ModelConstructor> {

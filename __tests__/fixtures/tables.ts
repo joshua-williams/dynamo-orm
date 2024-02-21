@@ -21,7 +21,7 @@ export class CookbookTable extends Table {}
 
 @table({
   name: 'Recipes',
-  primaryKey: {pk: 'id'},
+  primaryKey: {pk: 'cookbook', sk: 'title'},
   entity: RecipeEntity
 })
 export class RecipeTable extends Table {}

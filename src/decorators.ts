@@ -38,8 +38,6 @@ export function attribute(type: AttributeType = AttributeType.String, required: 
       };
     }
     Reflect.defineMetadata('attributes', attributes , constructor)
-    // const a = Reflect.getMetadata('attributes', constructor)
-    // console.log(a)
   }
 }
 
