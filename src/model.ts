@@ -1,11 +1,10 @@
-import Entity from "./entity";
-import { Attributes } from "./types";
+import {Attributes, EntityConstructor} from "./types";
 
 
 class Model {
   public name: string;
   protected attributes: Array<string> | Attributes = {};
-  protected entities: Array<Entity> = [];
+  protected entities: Array<EntityConstructor> = [];
 
   public fill(attribute: Attributes | string, value?:any) {
     switch (typeof attribute) {

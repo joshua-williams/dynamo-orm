@@ -1,12 +1,19 @@
-import Entity from "./entity";
+import {EntityConstructor, PrimaryKey} from "./types";
+import {Entity} from "../index";
 
 class Table {
   public name: string;
-  private entities: Array<Entity>;
+  private entity: EntityConstructor;
+  private primaryKey: PrimaryKey;
 
   constructor() {
     this.name = Reflect.getMetadata('name', this.constructor);
-    this.entities = Reflect.getMetadata('entities', this.constructor);
+    this.entity = Reflect.getMetadata('entity', this.constructor);
+    this.primaryKey = Reflect.getMetadata('primaryKey', this.constructor);
+
+    if (!this.entity) {
+      throw new Error(`${this.constructor.name} requires an Entity to be defined. See @Table in dynamorm/decorators`)
+    }
   }
 
   static getName() {
@@ -15,15 +22,74 @@ class Table {
   getName() {
     return this.name;
   }
-  getEntities() {
-    return this.entities;
-  }
-  static getEntities() {
-    return Reflect.getMetadata('entities', this);
+
+  getEntity<T>(instance = false): T {
+    // @ts-ignore
+    return instance ? new this.entity() : this.entity;
   }
 
-  getEntity() {
-
+  static getEntity() {
+    return Reflect.getMetadata('entity', this);
   }
+
+
+  public toAttributeDefinition() {
+    const AttributeDefinitions = [];
+    const entity = new this.entity();
+    const attributes = entity.getAttributeDefinitions();
+    let partitionKeySet = false;
+    let sortKeySet = false;
+
+    for (let AttributeName in attributes) {
+      const isPartitionKey = AttributeName == this.primaryKey.pk;
+      const isSortKey = AttributeName == this.primaryKey.sk;
+
+      if (isPartitionKey || isSortKey) {
+        if (isPartitionKey) partitionKeySet = true;
+        if (isSortKey) sortKeySet = true;
+        AttributeDefinitions.push({
+          AttributeName,
+          AttributeType: attributes[AttributeName].type
+        })
+      }
+    }
+    if (!partitionKeySet) {
+      const message = 'Partition key not set on ' + this.constructor.name
+      throw new Error(message);
+    }
+    if (this.primaryKey.sk && !sortKeySet) {
+      const message = `Sort key is defined on ${this.constructor.name} but not found in any entities`
+      throw new Error(message)
+    }
+
+    return AttributeDefinitions;
+  }
+
+  public toCreateCommandInput() {
+    const AttributeDefinitions = this.toAttributeDefinition();
+    const ProvisionedThroughput = {
+      ReadCapacityUnits: 1,
+      WriteCapacityUnits: 1,
+    };
+    const KeySchema = [{
+      AttributeName: this.primaryKey.pk,
+      KeyType: 'HASH'
+    }];
+
+    if (this.primaryKey.sk) {
+      KeySchema.push({
+        AttributeName: this.primaryKey.sk,
+        KeyType: 'RANGE'
+      })
+    }
+
+    return {
+      TableName: this.name,
+      AttributeDefinitions,
+      KeySchema,
+      ProvisionedThroughput
+    }
+  }
+
 }
 export default Table;

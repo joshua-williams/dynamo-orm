@@ -97,4 +97,18 @@ describe('app', () => {
     })
 
   })
+
+  describe('table creation', () => {
+    it('should create table', async () => {
+      const Constructor = db.getTable('CookbookTable');
+      const result = await db.createTable(Constructor);
+      expect(result).toHaveProperty('TableDescription');
+    })
+
+    it('should create all tables', async () => {
+      const result = await db.createTables();
+      console.log(result);
+      expect(result).toBeInstanceOf(Array);
+    })
+  })
 })
