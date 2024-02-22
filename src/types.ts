@@ -3,6 +3,9 @@ import Table from "./table";
 import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
 import Model from "./model";
 
+export type EntityConstructor = new() => Entity;
+
+export type Entities = Record<string, EntityConstructor>
 export interface EntityAttributes extends Record<string|symbol, any> {}
 
 export type Attributes = Record<string, any>;
@@ -42,7 +45,7 @@ export type TableOptions = {
   name: string,
   primaryKey: PrimaryKey
   autoCreate?: boolean,
-  entities: Array<Entity>
+  entity: Record<string, any>
 }
 
 export type ModelConstructor = new() => Model
