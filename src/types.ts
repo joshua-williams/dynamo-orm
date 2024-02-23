@@ -39,7 +39,11 @@ export type PrimaryKey = {
   sk?: string,
 }
 
-export type TableConstructor = new() => Table;
+export type TableConstructor = {
+  new () : Table,
+  getName(): string,
+  getEntity(instance?: boolean): any
+}
 
 export type TableOptions = {
   name: string,
@@ -48,7 +52,9 @@ export type TableOptions = {
   entity: Record<string, any>
 }
 
-export type ModelConstructor = new() => Model
+export type ModelConstructor = {
+  new(tables: Array<TableConstructor>, client: DynamoDBClient): Model,
+}
 
 export type ModelOptions = {
   entities: Array<Entity>

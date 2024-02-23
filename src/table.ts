@@ -17,8 +17,9 @@ class Table {
   }
 
   static getName() {
-    return Reflect.getMetadata('name', this.constructor);
+    return Reflect.getMetadata('name', this);
   }
+
   getName() {
     return this.name;
   }
@@ -28,8 +29,9 @@ class Table {
     return instance ? new this.entity() : this.entity;
   }
 
-  static getEntity() {
-    return Reflect.getMetadata('entity', this);
+  static getEntity(instance = false) {
+    const Constructor =  Reflect.getMetadata('entity', this);
+    return instance ? new Constructor() : Constructor;
   }
 
 

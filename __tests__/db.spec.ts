@@ -111,4 +111,16 @@ describe('app', () => {
       expect(result).toBeInstanceOf(Array);
     })
   })
+
+  describe('save item', () => {
+    it('should save item', () => {
+      const model = db.model('AuthorEntity');
+      model.fill({
+        firstName: 'Jack',
+        lastName: 'Black',
+        email: 'jack@black.com'
+      })
+      model.save();
+    })
+  })
 })

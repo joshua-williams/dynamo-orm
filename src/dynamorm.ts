@@ -13,10 +13,10 @@ class DynamoRM {
   private readonly models: Array<any>
   private readonly client: DynamoDBClient;
 
-  constructor(App: Function) {
-    this.tables = Reflect.getMetadata('tables', App)
-    this.models = Reflect.getMetadata('models', App)
-    this.client = Reflect.getMetadata('client', App);
+  constructor(DB: Function) {
+    this.tables = Reflect.getMetadata('tables', DB)
+    this.models = Reflect.getMetadata('models', DB)
+    this.client = Reflect.getMetadata('client', DB);
     if (!this.tables || !this.client) {
       throw new Error('A dynamodb client and tables are required')
     }
@@ -84,13 +84,18 @@ class DynamoRM {
     }
     const attributes = Object.keys(attributeDefinitions).reduce(reducer, {})
     class EntityModel extends Model {
-      protected entities: Array<EntityConstructor> = [Constructor.prototype];
+      protected entities: Array<EntityConstructor> = [Constructor];
       protected attributes = attributes
     };
     Object.assign(EntityModel.prototype, Entity);
-    return new EntityModel();
+    return new EntityModel(this.tables, this.client);
   }
 
+  /**
+   * @description Gets instance of model
+   * @param modelName
+   * @param attributes
+   */
   model(modelName: string, attributes?:Record<string, any>):Model {
     let Constructor:ModelConstructor = this.getModel(modelName);
     let model:Model;
