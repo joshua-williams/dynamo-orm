@@ -52,16 +52,13 @@ describe('app', () => {
 
     it('should get entities from model', () => {
       const model = db.model('CookbookModel');
-      const entities = model.getEntities();
-      expect(entities).toBeInstanceOf(Array)
-      expect(entities).toHaveLength(3)
+      const entity = model.getEntity(true);
+      expect(entity).toBeInstanceOf(Entity)
     })
     it('should get entities from model made from entity', () => {
       const model = db.model('CookbookEntity');
-      const entities = model.getEntities();
-      expect(entities).toBeInstanceOf(Array)
-      expect(entities).toHaveLength(1)
-      expect(entities[0]).toBeInstanceOf(Entity)
+      const entity = model.getEntity(true);
+      expect(entity).toBeInstanceOf(Entity)
     })
   })
 

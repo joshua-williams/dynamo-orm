@@ -39,7 +39,7 @@ class DynamoRM {
     const commandInput = table.toCreateCommandInput();
     // @ts-ignore
     const command = new CreateTableCommand(commandInput);
-    let response;
+    let response: any;
     let message = `Failed to save table ${table.constructor.name}`
     try {
       response = await this.client.send(command);
@@ -84,11 +84,11 @@ class DynamoRM {
     }
     const attributes = Object.keys(attributeDefinitions).reduce(reducer, {})
     class EntityModel extends Model {
-      protected entities: Array<EntityConstructor> = [Constructor];
+      protected entity: EntityConstructor = Constructor;
       protected attributes = attributes
     };
     Object.assign(EntityModel.prototype, Entity);
-    return new EntityModel(this.tables, this.client);
+    return new EntityModel(this.client);
   }
 
   /**
@@ -101,7 +101,7 @@ class DynamoRM {
     let model:Model;
 
     if (Constructor) {
-      model = new Constructor();
+      model = new Constructor(this.client);
     } else {
       for (let table of this.tables) {
         const EntityConstructor = table.getEntity();
@@ -111,9 +111,7 @@ class DynamoRM {
         }
       }
     }
-
     if (!model) return;
-    model.init();
     if (attributes) {
       model.fill(attributes);
     }

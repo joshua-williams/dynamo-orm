@@ -13,6 +13,7 @@ export type Attributes = Record<string, any>;
 export type AttributeDefinition = {
   type: string,
   required?: boolean,
+  value?: any,
 };
 
 export type AttributeDefinitions = {
@@ -53,11 +54,11 @@ export type TableOptions = {
 }
 
 export type ModelConstructor = {
-  new(tables: Array<TableConstructor>, client: DynamoDBClient): Model,
+  new(client: DynamoDBClient): Model,
 }
 
 export type ModelOptions = {
-  entities: Array<Entity>
+  entity: EntityConstructor
 }
 
 export type DynamoRM = {

@@ -1,17 +1,63 @@
-import {Attributes, AttributeType, EntityConstructor, TableConstructor} from "./types";
-import {Entity, Table} from "../index";
-import {DynamoDBClient, PutItemCommand, PutItemCommandInput} from "@aws-sdk/client-dynamodb";
+import {
+  AttributeDefinition,
+  AttributeDefinitions,
+  Attributes,
+  AttributeType,
+  EntityConstructor,
+} from "./types";
+import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
 
 class Model {
   public name: string;
-  protected attributes: Array<string> | Attributes = {};
-  protected entities: Array<EntityConstructor> = [];
+  protected entity: EntityConstructor;
+  protected attributes: AttributeDefinitions = {};
 
-  constructor(
-    private tables: Array<TableConstructor>,
-    private client: DynamoDBClient) {
+  constructor( private client: DynamoDBClient ) {
+    this.entity = Reflect.getMetadata('entity', this.constructor);
+    const entity = new this.entity();
+    this.attributes = entity.getAttributeDefinitions();
+
+    for (let attribute in this.attributes) {
+      Object.defineProperty(this, attribute, {
+        get() {
+          return this.attributes[attribute].value
+        },
+        set(value) {
+          const result = this.validateAttribute(this.attributes[attribute], value);
+          if (result instanceof TypeError) {
+            result.message = `${attribute} must be a ${result.message} on ${this.constructor.name}`
+            throw result;
+          }
+          this.attributes[attribute].value = value
+        }
+      });
+    }
+  }
+
+  private validateAttribute(attribute: AttributeDefinition, value: any) {
+    switch (attribute.type.toLowerCase()) {
+      case 's':
+        if ((typeof value) != 'string') return new TypeError('string')
+        break;
+      case 'ss':
+        if (! (value instanceof Array)) return new TypeError('string set');
+        for (let v of value) {
+          if ((typeof v) !== 'string') return new TypeError('string set');
+        }
+        break;
+      case 'n':
+        if ((typeof value) !== 'number') return new TypeError('number');
+        break;
+      case 'ns':
+        if (! (value instanceof Array)) return new TypeError('number set');
+        for (let v of value) {
+          if ((typeof value) !== 'number') return new TypeError('number set');
+        }
+        break;
+    }
 
   }
+
   public fill(attribute: Attributes | string, value?:any) {
     switch (typeof attribute) {
       case 'string':
@@ -25,19 +71,6 @@ class Model {
     }
   }
 
-  /**
-   * @description If this.attributes are initialized as Array<string>, init will make it an object setting each string
-   * value as the key and setting the value to undefined
-   */
-  public init() {
-    if (this.attributes instanceof Array) {
-      const reducer = (attributes, attribute ) => {
-        attributes[attribute] = undefined;
-        return attributes;
-      }
-      this.attributes = this.attributes.reduce(reducer, {});
-    }
-  }
 
   /**
    * @description Sets named attribute value
@@ -46,7 +79,7 @@ class Model {
    */
   public set(attributeName: string, value: any) {
     if (this.attributes.hasOwnProperty(attributeName)) {
-      this.attributes[attributeName] = value;
+      this.attributes[attributeName].value = value;
     }
   }
 
@@ -54,9 +87,9 @@ class Model {
    * @description Sets named attribute value. If attribute not set and defaultValue is not provided an error is thrown
    * @param attributeName
    */
-  public get(attributeName) {
+  public get(attributeName: string) {
     if (this.attributes.hasOwnProperty(attributeName)) {
-      return this.attributes[attributeName];
+      return this.attributes[attributeName].value;
     }
     throw new Error(`Attribute not found: ${attributeName}`)
   }
@@ -64,40 +97,17 @@ class Model {
   public getAttributes() {
     return this.attributes;
   }
-
-  public getEntities() {
-    return this.entities;
+  static getEntity() {
+    return Reflect.getMetadata('entity', this);
   }
+
+  public getEntity(instance: boolean = false) {
+    return instance ? new this.entity() : this.entity;
+  }
+
 
   public save() {
-    const inputs = this.toPutItemCommandInput();
-    for (let input of Object.values(inputs)) {
-      const command = new PutItemCommand(<PutItemCommandInput>input);
 
-    }
-  }
-  public toPutItemCommandInput() {
-    const inputs = {};
-    for (let attributeName in this.attributes) {
-      const table = this.getTableByAttribute(attributeName);
-      const TableName = table.getName();
-      if (!inputs.hasOwnProperty(TableName)) {
-        inputs[TableName] = {
-          TableName,
-          Item: {},
-        };
-      }
-      const entity = table.getEntity(true);
-      const attributeDefinitions = Reflect.getMetadata('attributes', entity);
-      if (attributeDefinitions.hasOwnProperty(attributeName)) {
-        const { type } = attributeDefinitions[attributeName];
-        const dynamoType = this.toDynamoType(type);
-        inputs[TableName].Item[attributeName] = {
-          [dynamoType]: this.attributes[attributeName]
-        }
-      }
-    }
-    return inputs;
   }
 
   private toDynamoType(type) {
@@ -116,17 +126,6 @@ class Model {
     return typeMap[type];
   }
 
-  private getTableByAttribute(attributeName: string) {
-    let _table: Table;
-    for (let table of this.tables) {
-      const entity: Entity = table.getEntity(true);
-      const attributeDefinitions = entity.getAttributeDefinitions();
-      if (attributeDefinitions.hasOwnProperty(attributeName)) {
-        _table = new table();
-      }
-    }
-    return _table;
-  }
 }
 
 export default Model
