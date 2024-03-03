@@ -34,31 +34,11 @@ class DynamoRM {
     }
   }
 
-  async createTable(tableConstructor: TableConstructor): Promise<any> {
-    const table = new tableConstructor();
-    const commandInput = table.toCreateCommandInput();
-    // @ts-ignore
-    const command = new CreateTableCommand(commandInput);
-    let response: any;
-    let message = `Failed to save table ${table.constructor.name}`
-    try {
-      response = await this.client.send(command);
-    } catch ( e ) {
-
-      switch ( e.constructor ) {
-        case ResourceInUseException:
-          message = `Table already exists "${table.constructor.name}"`
-          break;
-      }
-      throw new Error(message);
-    }
-    return response;
-  }
-
   public async createTables() {
     const results = [];
     for ( let Constructor of this.tables ) {
-      const result = await this.createTable(Constructor)
+      const table = new Constructor(this.client);
+      const result = await table.create(Constructor)
       results.push(result);
     }
     return results;

@@ -1,12 +1,19 @@
 import {EntityConstructor, PrimaryKey} from "./types";
-import {Entity} from "../index";
+import {
+  CreateTableCommand,
+  CreateTableCommandInput, CreateTableCommandOutput,
+  DynamoDBClient,
+  KeySchemaElement,
+  KeyType, ResourceInUseException
+} from "@aws-sdk/client-dynamodb";
 
-class Table {
+export default class Table {
   private name: string;
   private entity: EntityConstructor;
   private primaryKey: PrimaryKey;
+  private client: DynamoDBClient;
 
-  constructor() {
+  constructor(client?: DynamoDBClient) {
     this.name = Reflect.getMetadata('name', this.constructor);
     this.entity = Reflect.getMetadata('entity', this.constructor);
     this.primaryKey = Reflect.getMetadata('primaryKey', this.constructor);
@@ -14,6 +21,8 @@ class Table {
     if (!this.entity) {
       throw new Error(`${this.constructor.name} requires an Entity to be defined. See @Table in dynamorm/decorators`)
     }
+
+    this.client = client ? client : new DynamoDBClient();
   }
 
   static getName() {
@@ -67,21 +76,21 @@ class Table {
     return AttributeDefinitions;
   }
 
-  public toCreateCommandInput() {
+  public toCreateCommandInput(): CreateTableCommandInput {
     const AttributeDefinitions = this.toAttributeDefinition();
     const ProvisionedThroughput = {
       ReadCapacityUnits: 1,
       WriteCapacityUnits: 1,
     };
-    const KeySchema = [{
+    const KeySchema: Array<KeySchemaElement> = [{
       AttributeName: this.primaryKey.pk,
-      KeyType: 'HASH'
+      KeyType: KeyType.HASH
     }];
 
     if (this.primaryKey.sk) {
       KeySchema.push({
         AttributeName: this.primaryKey.sk,
-        KeyType: 'RANGE'
+        KeyType: KeyType.RANGE,
       })
     }
 
@@ -93,5 +102,23 @@ class Table {
     }
   }
 
+  public async create() {
+    const commandInput = this.toCreateCommandInput();
+    const command = new CreateTableCommand(commandInput);
+    let message = `Failed to save table ${this.constructor.name}`;
+    let response: CreateTableCommandOutput;
+
+    try {
+      response = await this.client.send(command);
+    } catch ( e ) {
+
+      switch ( e.constructor ) {
+        case ResourceInUseException:
+          message = `Table already exists "${this.constructor.name}"`
+          break;
+      }
+      throw new Error(message);
+    }
+    return response;
+  }
 }
-export default Table;

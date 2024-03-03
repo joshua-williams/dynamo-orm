@@ -1,7 +1,5 @@
-import db from './fixtures/db'
 import {CookbookModel} from "./fixtures/models";
 import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
-
 
 const client = new DynamoDBClient({endpoint: 'http://localhost:8000'});
 describe('model', () => {
@@ -53,7 +51,7 @@ describe('model', () => {
         author: 'com.joshua360@gmail.com'
       });
       const result = await model.save();
-      console.log(result);
+      expect(result).toHaveProperty('$metadata.httpStatusCode', 200);
     })
   })
 })

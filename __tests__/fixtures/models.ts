@@ -1,4 +1,3 @@
-import { AuthorEntity, CookbookEntity, RecipeEntity } from "./entities";
 import {model, Model} from "../../index";
 import {AuthorTable, CookbookTable} from "./tables";
 
