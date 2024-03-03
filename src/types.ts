@@ -35,6 +35,16 @@ export enum AttributeType {
   BinarySet = 'BS',
 }
 
+export type KeyInput = {
+  AttributeName: string,
+  AttributeType: string
+}
+
+export type PrimaryKeyDefinition = {
+  pk: KeyInput,
+  sk: KeyInput
+}
+
 export type PrimaryKey = {
   pk: string,
   sk?: string,

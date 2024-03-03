@@ -1,5 +1,6 @@
 import {CookbookModel} from "./fixtures/models";
 import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
+import Model from "../src/model";
 
 const client = new DynamoDBClient({endpoint: 'http://localhost:8000'});
 describe('model', () => {
@@ -52,6 +53,15 @@ describe('model', () => {
       });
       const result = await model.save();
       expect(result).toHaveProperty('$metadata.httpStatusCode', 200);
+    })
+  })
+
+  describe('find', () => {
+    it('should get item by primary key', async () => {
+      const result = await model.find('Southern Savories','com.joshua360@gmail.com');
+      expect(result).toBeInstanceOf(Model)
+      expect(result.title).toEqual('Southern Savories')
+      expect(result.author).toEqual('com.joshua360@gmail.com')
     })
   })
 })
