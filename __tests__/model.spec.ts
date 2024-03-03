@@ -64,4 +64,11 @@ describe('model', () => {
       expect(result.author).toEqual('com.joshua360@gmail.com')
     })
   })
+
+  describe('delete', () => {
+    it('should delete item by primary key', async () => {
+      const result = await model.delete('Southern Savories','com.joshua360@gmail.com');
+      expect(result).toBe(true);
+    })
+  })
 })
