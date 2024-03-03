@@ -56,19 +56,14 @@ class DynamoRM {
     }
   }
 
-  private entityToModel(Constructor: EntityConstructor): Model {
-    const attributeDefinitions = Reflect.getMetadata('attributes', Constructor.prototype);
-    const reducer = (attributes: Record<string, any>, attribute: string) => {
-      attributes = {...attributes, [attribute]: undefined}
-      return attributes;
-    }
-    const attributes = Object.keys(attributeDefinitions).reduce(reducer, {})
-    class EntityModel extends Model {
-      protected entity: EntityConstructor = Constructor;
+  private tableToModel(table: TableConstructor): Model {
+    const attributes = table.getEntity(true).getAttributeDefinitions();
+    class TableModel extends Model {
       protected attributes = attributes
     };
-    Object.assign(EntityModel.prototype, Entity);
-    return new EntityModel(this.client);
+    Reflect.defineMetadata('table', table, TableModel);
+    Object.assign(TableModel.prototype, Entity);
+    return new TableModel(this.client);
   }
 
   /**
@@ -84,9 +79,9 @@ class DynamoRM {
       model = new Constructor(this.client);
     } else {
       for (let table of this.tables) {
-        const EntityConstructor = table.getEntity();
-        if (EntityConstructor.name == modelName) {
-          model = this.entityToModel(EntityConstructor);
+        const entityConstructor: EntityConstructor = table.getEntity();
+        if (entityConstructor.name == modelName) {
+          model = this.tableToModel(table);
           break;
         }
       }

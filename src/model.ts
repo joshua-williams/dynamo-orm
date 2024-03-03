@@ -11,7 +11,6 @@ import {
   PutItemCommandOutput,
   ResourceNotFoundException
 } from "@aws-sdk/client-dynamodb";
-import Entity from "./entity";
 import {ServiceUnavailableException, TableNotFoundException} from "./exceptions";
 
 class Model {
@@ -112,6 +111,12 @@ class Model {
   public getAttributes() {
     return this.attributes;
   }
+  public getAttributeValues() {
+    return Object.keys(this.attributes).reduce((attributes, attribute) => {
+      attributes[attribute] = this.attributes[attribute].value;
+      return attributes;
+    }, {})
+  }
   static getEntity() {
     return Reflect.getMetadata('entity', this);
   }
@@ -162,23 +167,6 @@ class Model {
     }
     return input;
   }
-
-  private toDynamoType(type) {
-    const typeMap = {
-      [ AttributeType.String ]    : 'S',
-      [ AttributeType.Number ]    : 'N',
-      [ AttributeType.Boolean ]   : 'BOOL',
-      [ AttributeType.List ]      : 'L',
-      [ AttributeType.Map ]       : 'M',
-      [ AttributeType.Binary ]    : 'B',
-      [ AttributeType.Null ]      : 'NULL',
-      [ AttributeType.StringSet ] : 'SS',
-      [ AttributeType.NumberSet ] : 'NS',
-      [ AttributeType.BinarySet ] : 'BS',
-    };
-    return typeMap[type];
-  }
-
 }
 
 export default Model

@@ -37,15 +37,17 @@ describe('app', () => {
 
     it('should make entity into model instance', () => {
       const model = db.model('CookbookEntity');
+
       const attributes = model.getAttributes();
       const expectedAttributes = {
-        title: undefined,
-        summary: undefined,
-        description: undefined,
-        author: undefined,
-        image: undefined
+        title: { type: 'S', required: false, value: 'Southern Cornbread' },
+        summary: { type: 'S', required: false, value: undefined },
+        description: { type: 'S', required: false, value: undefined },
+        author: { type: 'S', required: false, value: undefined },
+        image: { type: 'SS', required: false, value: undefined },
+        reviews: { type: 'N', required: false, value: undefined }
       }
-      expect(model.constructor.name).toBe('EntityModel')
+      expect(model.constructor.name).toBe('TableModel')
       expect(attributes).toMatchObject(expectedAttributes);
       expect(model).toBeInstanceOf(Model)
     })
@@ -74,7 +76,7 @@ describe('app', () => {
 
     it('should get an attribute default value', () => {
       const title = model.get('title');
-      expect(title).toEqual('Southern Smothered');
+      expect(title).toEqual('Southern Cornbread');
     })
 
     it('should set an attribute', () => {
@@ -89,7 +91,7 @@ describe('app', () => {
         summary: 'A collection of good recipes'
       }
       model.fill(expectedAttributes)
-      const attributes = model.getAttributes();
+      const attributes = model.getAttributeValues();
       expect(attributes).toMatchObject(expectedAttributes);
     })
 
@@ -98,7 +100,6 @@ describe('app', () => {
   describe('table creation', () => {
     it('should create all tables', async () => {
       const result = await db.createTables();
-      console.log(result);
       expect(result).toBeInstanceOf(Array);
     })
   })
