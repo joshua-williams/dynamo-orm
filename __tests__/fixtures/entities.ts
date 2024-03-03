@@ -1,4 +1,5 @@
-import {Entity, attribute} from "../../index";
+import {attribute, Entity} from "../../index";
+import {AttributeType} from "../../src/types";
 
 export class AuthorEntity extends Entity {
   @attribute()
@@ -22,7 +23,7 @@ export class AuthorEntity extends Entity {
 
 export class CookbookEntity extends Entity {
   @attribute()
-  private title;
+  private title = 'Southern Cornbread';
 
   @attribute()
   private summary;
@@ -33,8 +34,11 @@ export class CookbookEntity extends Entity {
   @attribute()
   private author;
 
-  @attribute()
+  @attribute(AttributeType.StringSet)
   private image;
+
+  @attribute(AttributeType.Number)
+  private reviews;
 }
 
 export class RecipeEntity extends Entity {

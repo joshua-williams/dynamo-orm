@@ -11,11 +11,14 @@ class Entity {
       if (!attributes.hasOwnProperty(name)) return attributeDefinitions;
 
       const { type, required } = attributes[name];
-      attributeDefinitions[name] = {type, required};
+      attributeDefinitions[name] = {type, required, value: this[name]};
       return attributeDefinitions;
     }
     return properties.reduce(reducer, {});
   }
 
+  public hasMany() {
+
+  }
 }
 export default Entity
