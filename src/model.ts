@@ -164,12 +164,15 @@ class Model {
     return result;
   }
 
-  public async find(pk: string, sk?: string): Promise<Model>{
+  public async find(pk?: string, sk?: string): Promise<Model>{
     const primaryKeyDefinition = this.table.getPrimaryKeyDefinition();
     if (primaryKeyDefinition.sk && !sk) {
       throw new PrimaryKeyException(`Failed to fetch item. Primary key requires partition key and sort key on ${this.table.constructor.name}`)
     }
-    const primaryKey = {pk, sk}
+    const primaryKey = {
+      pk: pk || this.table.getPrimaryKey().pk,
+      sk: sk || this.table.getPrimaryKey().sk,
+    }
     const input: GetItemCommandInput = {
       TableName: this.table.getName(),
       // @ts-ignore
@@ -199,8 +202,11 @@ class Model {
    * @param sk - (optional) Sort Key
    * @return boolean - True if an item was deleted. False if primary key did not match an item and nothing was deleted
    */
-  public async delete(pk: string, sk?: string) {
-    const primaryKey = {pk, sk};
+  public async delete(pk?: string, sk?: string) {
+    const primaryKey = {
+      pk: pk || this.table.getPrimaryKey().pk,
+      sk: sk || this.table.getPrimaryKey().sk,
+    }
     const primaryKeyDefinition = this.table.getPrimaryKeyDefinition();
     if (primaryKeyDefinition.sk && !sk) {
       throw new PrimaryKeyException(`Failed to delete item. Primary key requires partition key and sort key on ${this.table.constructor.name}`)

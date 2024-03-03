@@ -143,6 +143,9 @@ export default class Table {
     return primaryKeyDefinition;
   }
 
+  public getPrimaryKey() {
+    return this.primaryKey;
+  }
   public async create() {
     const commandInput = this.toCreateCommandInput();
     const command = new CreateTableCommand(commandInput);
