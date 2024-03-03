@@ -1,13 +1,11 @@
 import { AuthorEntity, CookbookEntity, RecipeEntity } from "./entities";
 import {model, Model} from "../../index";
+import {AuthorTable, CookbookTable} from "./tables";
 
-@model({
-  entity: CookbookEntity
-})
-export class CookbookModel extends Model {
+@model({table: CookbookTable})
+export class CookbookModel extends Model {}
 
-}
-@model({entity: AuthorEntity})
+@model({table: AuthorTable})
 export class AuthorModel extends Model {
 
 }

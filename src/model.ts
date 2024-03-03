@@ -3,18 +3,26 @@ import {
   AttributeDefinitions,
   Attributes,
   AttributeType,
-  EntityConstructor,
+  TableConstructor,
 } from "./types";
-import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBClient,
+  PutItemCommand,
+  PutItemCommandOutput,
+  ResourceNotFoundException
+} from "@aws-sdk/client-dynamodb";
+import Entity from "./entity";
+import {ServiceUnavailableException, TableNotFoundException} from "./exceptions";
 
 class Model {
   public name: string;
-  protected entity: EntityConstructor;
+  protected table: TableConstructor;
+
   protected attributes: AttributeDefinitions = {};
 
   constructor( private client: DynamoDBClient ) {
-    this.entity = Reflect.getMetadata('entity', this.constructor);
-    const entity = new this.entity();
+    this.table = Reflect.getMetadata('table', this.constructor);
+    const entity = this.table.getEntity(true);
     this.attributes = entity.getAttributeDefinitions();
 
     for (let attribute in this.attributes) {
@@ -44,18 +52,25 @@ class Model {
         for (let v of value) {
           if ((typeof v) !== 'string') return new TypeError('string set');
         }
-        break;
+        break
       case 'n':
         if ((typeof value) !== 'number') return new TypeError('number');
-        break;
+        break
       case 'ns':
         if (! (value instanceof Array)) return new TypeError('number set');
         for (let v of value) {
           if ((typeof value) !== 'number') return new TypeError('number set');
         }
+        break
+      case 'bb':
+        if (typeof value != 'boolean') return new TypeError('boolean');
+        break;
+
+      case 'map':
+        // @ts-ignore
+        if (typeof value != 'object') return new TypeError('object');
         break;
     }
-
   }
 
   public fill(attribute: Attributes | string, value?:any) {
@@ -102,12 +117,50 @@ class Model {
   }
 
   public getEntity(instance: boolean = false) {
-    return instance ? new this.entity() : this.entity;
+    return this.table.getEntity(instance);
   }
 
 
-  public save() {
+  public async save(): Promise<PutItemCommandOutput> {
+    const input = this.toPutCommandInput();
+    const command = new PutItemCommand(input);
+    let result: PutItemCommandOutput;
+    try {
+      result = await this.client.send(command);
+    } catch ( e ) {
+      let message = `Failed to save dynamo model ${this.constructor.name}. ${e.message}`;
 
+      switch ( e.constructor ) {
+        case ResourceNotFoundException:
+          const { statusCode, reason } = e.$response;
+
+          switch( statusCode ) {
+            case 400:
+              message = `dynamodb table does not exist "${this.table.getName()}"`
+              break;
+          }
+          throw new TableNotFoundException(message);
+
+        default:
+          throw new ServiceUnavailableException(message);
+      }
+    }
+    return result;
+  }
+
+  private toPutCommandInput() {
+    const input = {
+      TableName: this.table.getName(),
+      Item: {}
+    };
+    for (let name in this.attributes) {
+      const attribute = this.attributes[name];
+      if (attribute.value === undefined) continue;
+      input.Item[name] = {
+        [attribute.type]: attribute.value
+      }
+    }
+    return input;
   }
 
   private toDynamoType(type) {

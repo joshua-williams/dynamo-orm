@@ -2,7 +2,7 @@ import {EntityConstructor, PrimaryKey} from "./types";
 import {Entity} from "../index";
 
 class Table {
-  public name: string;
+  private name: string;
   private entity: EntityConstructor;
   private primaryKey: PrimaryKey;
 

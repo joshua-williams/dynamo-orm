@@ -35,8 +35,25 @@ describe('model', () => {
     });
 
     it ('should fail number set validation', () => {
-      const expectedFailure = () => model.reviews = '70';
+      const expectedFailure = () => model.reviews = ['70'];
       expect(expectedFailure).toThrow(TypeError)
+    })
+
+    it('should fail map validation', () => {
+      const expectedFailure = () => model.reviews = ['70'];
+      expect(expectedFailure).toThrow(TypeError)
+
+    })
+  })
+
+  describe('save', () => {
+    it('should save', async () => {
+      model.fill({
+        title: "Southern Savories",
+        author: 'com.joshua360@gmail.com'
+      });
+      const result = await model.save();
+      console.log(result);
     })
   })
 })

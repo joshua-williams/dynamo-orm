@@ -58,7 +58,7 @@ export type ModelConstructor = {
 }
 
 export type ModelOptions = {
-  entity: EntityConstructor
+  table: TableConstructor
 }
 
 export type DynamoRM = {
