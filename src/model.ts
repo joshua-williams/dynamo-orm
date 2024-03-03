@@ -6,6 +6,9 @@ import {
   TableConstructor,
 } from "./types";
 import {
+  DeleteItemCommand,
+  DeleteItemCommandOutput,
+  DeleteItemInput,
   DynamoDBClient, GetItemCommand, GetItemCommandInput, GetItemCommandOutput,
   PutItemCommand,
   PutItemCommandOutput,
@@ -164,7 +167,7 @@ class Model {
   public async find(pk: string, sk?: string): Promise<Model>{
     const primaryKeyDefinition = this.table.getPrimaryKeyDefinition();
     if (primaryKeyDefinition.sk && !sk) {
-      throw new PrimaryKeyException(`Primary key requires partition key and sort key on ${this.table.constructor.name}`)
+      throw new PrimaryKeyException(`Failed to fetch item. Primary key requires partition key and sort key on ${this.table.constructor.name}`)
     }
     const primaryKey = {pk, sk}
     const input: GetItemCommandInput = {
@@ -190,6 +193,33 @@ class Model {
     }
   }
 
+  /**
+   * @description Delete an item by primary key
+   * @param pk - Partition key
+   * @param sk - (optional) Sort Key
+   * @return boolean - True if an item was deleted. False if primary key did not match an item and nothing was deleted
+   */
+  public async delete(pk: string, sk?: string) {
+    const primaryKey = {pk, sk};
+    const primaryKeyDefinition = this.table.getPrimaryKeyDefinition();
+    if (primaryKeyDefinition.sk && !sk) {
+      throw new PrimaryKeyException(`Failed to delete item. Primary key requires partition key and sort key on ${this.table.constructor.name}`)
+    }
+    const input: DeleteItemInput = {
+      TableName: this.table.getName(),
+      // @ts-ignore
+      Key: this.table.toInputKey(primaryKey),
+      ReturnValues: "ALL_OLD"
+    }
+    const command = new DeleteItemCommand(input);
+    let result;
+    try {
+      result = await this.client.send(command);
+      return result.hasOwnProperty('Attributes');
+    } catch (e) {
+      console.log(e);
+    }
+  }
   private toPutCommandInput() {
     const input = {
       TableName: this.table.getName(),
