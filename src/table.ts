@@ -1,4 +1,4 @@
-import {EntityConstructor, PrimaryKey} from "./types";
+import {EntityConstructor, PrimaryKey, PrimaryKeyDefinition} from "./types";
 import {
   CreateTableCommand,
   CreateTableCommandInput, CreateTableCommandOutput,
@@ -6,6 +6,7 @@ import {
   KeySchemaElement,
   KeyType, ResourceInUseException
 } from "@aws-sdk/client-dynamodb";
+import {PrimaryKeyException} from "./exceptions";
 
 export default class Table {
   private name: string;
@@ -100,6 +101,46 @@ export default class Table {
       KeySchema,
       ProvisionedThroughput
     }
+  }
+
+  public toInputKey(primaryKey: PrimaryKey) {
+    const {pk, sk} = this.getPrimaryKeyDefinition();
+    if (!sk && primaryKey.sk) {
+      const message = `${this.constructor.name} table does not have a sort key defined but you are attempting to do a look by ${primaryKey.sk} `
+      throw new PrimaryKeyException(message)
+    }
+    const Key = {
+      [pk.AttributeName]: {
+        [pk.AttributeType]: primaryKey.pk
+      }
+    }
+
+    if (primaryKey.sk) {
+      Key[sk.AttributeName] = {
+        [sk.AttributeType]: primaryKey.sk
+      }
+    }
+    return Key;
+  }
+
+  public getPrimaryKeyDefinition(): PrimaryKeyDefinition {
+    const attributeDefinitions = this.toAttributeDefinition();
+    const primaryKeyDefinition = {
+      pk: {
+        AttributeName: null,
+        AttributeType: null,
+      },
+      sk: null
+    };
+    for (let attributeDefinition of attributeDefinitions) {
+      const {AttributeName} = attributeDefinition
+      if (this.primaryKey.pk === AttributeName) {
+        primaryKeyDefinition.pk = attributeDefinition
+      } else if (this.primaryKey.sk === AttributeName) {
+        primaryKeyDefinition.sk = attributeDefinition;
+      }
+    }
+    return primaryKeyDefinition;
   }
 
   public async create() {

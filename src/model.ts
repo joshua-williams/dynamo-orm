@@ -2,26 +2,34 @@ import {
   AttributeDefinition,
   AttributeDefinitions,
   Attributes,
-  AttributeType,
+  AttributeType, ModelConstructor,
   TableConstructor,
 } from "./types";
 import {
-  DynamoDBClient,
+  DynamoDBClient, GetItemCommand, GetItemCommandInput, GetItemCommandOutput,
   PutItemCommand,
   PutItemCommandOutput,
   ResourceNotFoundException
 } from "@aws-sdk/client-dynamodb";
-import {ServiceUnavailableException, TableNotFoundException} from "./exceptions";
+import {
+  DynamormException,
+  PrimaryKeyException,
+  ServiceUnavailableException,
+  TableNotFoundException
+} from "./exceptions";
+import Table from "./table";
+import Entity from "./entity";
+import {attribute} from "./decorators";
 
 class Model {
   public name: string;
-  protected table: TableConstructor;
+  protected table: Table;
 
   protected attributes: AttributeDefinitions = {};
 
   constructor( private client: DynamoDBClient ) {
-    this.table = Reflect.getMetadata('table', this.constructor);
-    const entity = this.table.getEntity(true);
+    this.table = new (Reflect.getMetadata('table', this.constructor));
+    const entity:Entity = this.table.getEntity(true);
     this.attributes = entity.getAttributeDefinitions();
 
     for (let attribute in this.attributes) {
@@ -151,6 +159,35 @@ class Model {
       }
     }
     return result;
+  }
+
+  public async find(pk: string, sk?: string): Promise<Model>{
+    const primaryKeyDefinition = this.table.getPrimaryKeyDefinition();
+    if (primaryKeyDefinition.sk && !sk) {
+      throw new PrimaryKeyException(`Primary key requires partition key and sort key on ${this.table.constructor.name}`)
+    }
+    const primaryKey = {pk, sk}
+    const input: GetItemCommandInput = {
+      TableName: this.table.getName(),
+      // @ts-ignore
+      Key: this.table.toInputKey(primaryKey)
+    }
+    const command = new GetItemCommand(input);
+    let result: GetItemCommandOutput;
+    try {
+      result = await this.client.send(command);
+      if (!result.hasOwnProperty('Item')) return;
+      const attributes = {};
+      for (let attribute in result.Item) {
+        attributes[attribute] = Object.values(result.Item[attribute])[0];;
+      }
+      const modelConstructor = this.constructor as ModelConstructor;
+      const model = new modelConstructor(this.client);
+      model.fill(attributes);
+      return model;
+    } catch (e) {
+      throw new DynamormException(e.message);
+    }
   }
 
   private toPutCommandInput() {

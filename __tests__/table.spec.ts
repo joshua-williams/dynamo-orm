@@ -45,4 +45,12 @@ describe('table', () => {
     const result = await table.create();
     expect(result).toHaveProperty('TableDescription');
   })
+  it('should getPrimaryKeyDefinition', () => {
+    const primaryKeyDefinition = table.getPrimaryKeyDefinition();
+    const expectedDefinition = {
+      pk: { AttributeName: 'title', AttributeType: 'S' },
+      sk: { AttributeName: 'author', AttributeType: 'S' }
+    }
+    expect(expectedDefinition).toMatchObject(primaryKeyDefinition)
+  })
 })
