@@ -2,12 +2,10 @@ import {
   AttributeDefinition,
   AttributeDefinitions,
   Attributes,
-  AttributeType, ModelConstructor,
-  TableConstructor,
+  ModelConstructor,
 } from "./types";
 import {
   DeleteItemCommand,
-  DeleteItemCommandOutput,
   DeleteItemInput,
   DynamoDBClient, GetItemCommand, GetItemCommandInput, GetItemCommandOutput,
   PutItemCommand,
@@ -22,7 +20,6 @@ import {
 } from "./exceptions";
 import Table from "./table";
 import Entity from "./entity";
-import {attribute} from "./decorators";
 
 class Model {
   public name: string;
@@ -52,37 +49,6 @@ class Model {
     }
   }
 
-  private validateAttribute(attribute: AttributeDefinition, value: any) {
-    switch (attribute.type.toLowerCase()) {
-      case 's':
-        if ((typeof value) != 'string') return new TypeError('string')
-        break;
-      case 'ss':
-        if (! (value instanceof Array)) return new TypeError('string set');
-        for (let v of value) {
-          if ((typeof v) !== 'string') return new TypeError('string set');
-        }
-        break
-      case 'n':
-        if ((typeof value) !== 'number') return new TypeError('number');
-        break
-      case 'ns':
-        if (! (value instanceof Array)) return new TypeError('number set');
-        for (let v of value) {
-          if ((typeof value) !== 'number') return new TypeError('number set');
-        }
-        break
-      case 'bb':
-        if (typeof value != 'boolean') return new TypeError('boolean');
-        break;
-
-      case 'map':
-        // @ts-ignore
-        if (typeof value != 'object') return new TypeError('object');
-        break;
-    }
-  }
-
   public fill(attribute: Attributes | string, value?:any) {
     switch (typeof attribute) {
       case 'string':
@@ -95,7 +61,6 @@ class Model {
         break;
     }
   }
-
 
   /**
    * @description Sets named attribute value
@@ -122,12 +87,14 @@ class Model {
   public getAttributes() {
     return this.attributes;
   }
+
   public getAttributeValues() {
     return Object.keys(this.attributes).reduce((attributes, attribute) => {
       attributes[attribute] = this.attributes[attribute].value;
       return attributes;
     }, {})
   }
+
   static getEntity() {
     return Reflect.getMetadata('entity', this);
   }
@@ -135,7 +102,6 @@ class Model {
   public getEntity(instance: boolean = false) {
     return this.table.getEntity(instance);
   }
-
 
   public async save(): Promise<PutItemCommandOutput> {
     const input = this.toPutCommandInput();
@@ -226,6 +192,38 @@ class Model {
       console.log(e);
     }
   }
+
+  private validateAttribute(attribute: AttributeDefinition, value: any) {
+    switch (attribute.type.toLowerCase()) {
+      case 's':
+        if ((typeof value) != 'string') return new TypeError('string')
+        break;
+      case 'ss':
+        if (! (value instanceof Array)) return new TypeError('string set');
+        for (let v of value) {
+          if ((typeof v) !== 'string') return new TypeError('string set');
+        }
+        break
+      case 'n':
+        if ((typeof value) !== 'number') return new TypeError('number');
+        break
+      case 'ns':
+        if (! (value instanceof Array)) return new TypeError('number set');
+        for (let v of value) {
+          if ((typeof value) !== 'number') return new TypeError('number set');
+        }
+        break
+      case 'bb':
+        if (typeof value != 'boolean') return new TypeError('boolean');
+        break;
+
+      case 'map':
+        // @ts-ignore
+        if (typeof value != 'object') return new TypeError('object');
+        break;
+    }
+  }
+
   private toPutCommandInput() {
     const input = {
       TableName: this.table.getName(),
