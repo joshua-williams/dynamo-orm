@@ -6,11 +6,11 @@ import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
 describe('table', () => {
   const config = {endpoint: 'http://localhost:8000'};
   const client = new DynamoDBClient(config);
-  const TableConstructor = db.getTable('CookbookTable');
-  let table: Table;
+  const CookbookTableConstructor = db.getTable('CookbookTable');
+  let table: Table
 
   beforeEach(() => {
-    table = new TableConstructor();
+    table = new CookbookTableConstructor(client);
 
   })
   describe('attribute definitions', () => {
@@ -65,5 +65,23 @@ describe('table', () => {
       sk: { AttributeName: 'author', AttributeType: 'S' }
     }
     expect(expectedDefinition).toMatchObject(primaryKeyDefinition)
+  })
+
+  it('should create table from table instance', async () => {
+    const result = await table.create();
+    expect(result).toHaveProperty('KeySchema');
+  })
+  it('should get information about existing table', async () => {
+    table = new CookbookTable(client);
+    const tableInfo = await table.describe();
+    expect(tableInfo).toHaveProperty('Table.TableName', 'Cookbooks')
+  })
+
+  it('should return undefined when describing non-existing table', async () => {
+    table = new CookbookTable(client);
+    // @ts-ignore
+    table.name = 'noname';
+    const tableInfo = await table.describe();
+    expect(tableInfo).toBe(undefined);
   })
 })
