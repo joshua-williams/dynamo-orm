@@ -47,7 +47,7 @@ describe('app', () => {
         image: { type: 'SS', required: false, value: undefined },
         reviews: { type: 'N', required: false, value: undefined }
       }
-      expect(model.constructor.name).toBe('TableModel')
+      expect(model.constructor.name).toBe('DynamicModel')
       expect(attributes).toMatchObject(expectedAttributes);
       expect(model).toBeInstanceOf(Model)
     })

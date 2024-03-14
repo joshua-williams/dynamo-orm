@@ -60,7 +60,7 @@ export type TableOptions = {
   name: string,
   primaryKey: PrimaryKey
   autoCreate?: boolean,
-  entity: Record<string, any>
+  entity: any
 }
 
 export type ModelConstructor = {

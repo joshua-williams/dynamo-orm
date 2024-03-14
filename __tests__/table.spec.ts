@@ -13,15 +13,27 @@ describe('table', () => {
     table = new TableConstructor();
 
   })
+  describe('attribute definitions', () => {
+    it('should get attribute definitions from factory table', () => {
+      const expectedAttributeDefinitions = [
+        { AttributeName: 'title', AttributeType: 'S' },
+        { AttributeName: 'author', AttributeType: 'S' }
+      ]
+      const attributeDefinitions = table.toAttributeDefinition();
+      expect(attributeDefinitions).toMatchObject(expectedAttributeDefinitions);
+    })
 
-  it('should get attribute definitions', () => {
-    const expectedAttributeDefinitions = [
-      { AttributeName: 'title', AttributeType: 'S' },
-      { AttributeName: 'author', AttributeType: 'S' }
-    ]
-    const attributeDefinitions = table.toAttributeDefinition();
-    expect(attributeDefinitions).toMatchObject(expectedAttributeDefinitions);
+    it('should get attribute definitions from table instance', () => {
+      let t = new CookbookTable()
+      const expectedAttributeDefinitions = [
+        { AttributeName: 'title', AttributeType: 'S' },
+        { AttributeName: 'author', AttributeType: 'S' }
+      ]
+      const attributeDefinitions = t.toAttributeDefinition();
+      expect(attributeDefinitions).toMatchObject(expectedAttributeDefinitions);
+    })
   })
+
 
   it('should output CreateCommandInput', () => {
     const expectedCommandInput = {
@@ -45,6 +57,7 @@ describe('table', () => {
     const result = await table.create();
     expect(result).toHaveProperty('TableDescription');
   })
+
   it('should getPrimaryKeyDefinition', () => {
     const primaryKeyDefinition = table.getPrimaryKeyDefinition();
     const expectedDefinition = {

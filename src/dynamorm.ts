@@ -8,7 +8,7 @@ import {EntityConstructor, ModelConstructor, TableConstructor} from "./types";
 /**
  * @todo throw error if tables or client is undefined
  */
-class DynamoRM {
+export class DynamoRM {
   private readonly tables: Array<any>;
   private readonly models: Array<any>
   private readonly client: DynamoDBClient;
@@ -58,12 +58,12 @@ class DynamoRM {
 
   private tableToModel(table: TableConstructor): Model {
     const attributes = table.getEntity(true).getAttributeDefinitions();
-    class TableModel extends Model {
+    class DynamicModel extends Model {
       protected attributes = attributes
     };
-    Reflect.defineMetadata('table', table, TableModel);
-    Object.assign(TableModel.prototype, Entity);
-    return new TableModel(this.client);
+    Reflect.defineMetadata('table', table, DynamicModel);
+    Object.assign(DynamicModel.prototype, Entity);
+    return new DynamicModel(this.client);
   }
 
   /**
