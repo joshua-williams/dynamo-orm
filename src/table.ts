@@ -1,12 +1,12 @@
 import {EntityConstructor, PrimaryKey, PrimaryKeyDefinition} from "./types";
 import {
   CreateTableCommand,
-  CreateTableCommandInput, CreateTableCommandOutput,
+  CreateTableCommandInput, CreateTableCommandOutput, DescribeTableCommand, DescribeTableCommandOutput,
   DynamoDBClient,
   KeySchemaElement,
-  KeyType, ResourceInUseException
+  KeyType, ResourceInUseException, ResourceNotFoundException
 } from "@aws-sdk/client-dynamodb";
-import {PrimaryKeyException} from "./exceptions";
+import {DynamormException, PrimaryKeyException} from "./exceptions";
 
 export default class Table {
   private name: string;
@@ -30,11 +30,11 @@ export default class Table {
     return Reflect.getMetadata('name', this);
   }
 
-  getName() {
+  public getName() {
     return this.name;
   }
 
-  getEntity<T>(instance = false): T {
+  public getEntity<T>(instance = false): T {
     // @ts-ignore
     return instance ? new this.entity() : this.entity;
   }
@@ -44,6 +44,29 @@ export default class Table {
     return instance ? new Constructor() : Constructor;
   }
 
+  public getPrimaryKeyDefinition(): PrimaryKeyDefinition {
+    const attributeDefinitions = this.toAttributeDefinition();
+    const primaryKeyDefinition = {
+      pk: {
+        AttributeName: null,
+        AttributeType: null,
+      },
+      sk: null
+    };
+    for (let attributeDefinition of attributeDefinitions) {
+      const {AttributeName} = attributeDefinition
+      if (this.primaryKey.pk === AttributeName) {
+        primaryKeyDefinition.pk = attributeDefinition
+      } else if (this.primaryKey.sk === AttributeName) {
+        primaryKeyDefinition.sk = attributeDefinition;
+      }
+    }
+    return primaryKeyDefinition;
+  }
+
+  public getPrimaryKey() {
+    return this.primaryKey;
+  }
 
   public toAttributeDefinition() {
     const AttributeDefinitions = [];
@@ -123,29 +146,6 @@ export default class Table {
     return Key;
   }
 
-  public getPrimaryKeyDefinition(): PrimaryKeyDefinition {
-    const attributeDefinitions = this.toAttributeDefinition();
-    const primaryKeyDefinition = {
-      pk: {
-        AttributeName: null,
-        AttributeType: null,
-      },
-      sk: null
-    };
-    for (let attributeDefinition of attributeDefinitions) {
-      const {AttributeName} = attributeDefinition
-      if (this.primaryKey.pk === AttributeName) {
-        primaryKeyDefinition.pk = attributeDefinition
-      } else if (this.primaryKey.sk === AttributeName) {
-        primaryKeyDefinition.sk = attributeDefinition;
-      }
-    }
-    return primaryKeyDefinition;
-  }
-
-  public getPrimaryKey() {
-    return this.primaryKey;
-  }
   public async create() {
     const commandInput = this.toCreateCommandInput();
     const command = new CreateTableCommand(commandInput);
@@ -162,6 +162,27 @@ export default class Table {
           break;
       }
       throw new Error(message);
+    }
+    return response;
+  }
+
+  /**
+   * @description Gets table formation. If table has not been created will return undefined
+   */
+  public async describe(): Promise<DescribeTableCommandOutput> {
+    const command = new DescribeTableCommand({
+      TableName: this.name
+    });
+    let response: DescribeTableCommandOutput;
+    try {
+      response = await this.client.send(command);
+    } catch (e) {
+      switch (e.constructor) {
+        case ResourceNotFoundException:
+          return;
+        default:
+          throw new DynamormException(e.message);
+      }
     }
     return response;
   }

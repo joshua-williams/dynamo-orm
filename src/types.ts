@@ -51,7 +51,7 @@ export type PrimaryKey = {
 }
 
 export type TableConstructor = {
-  new () : Table,
+  new (client?: DynamoDBClient) : Table,
   getName(): string,
   getEntity(instance?: boolean): any
 }
