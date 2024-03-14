@@ -193,6 +193,53 @@ class Model {
     }
   }
 
+  public clear() {
+    for (let attributeName in this.attributes) {
+      this.attributes[attributeName].value = undefined;
+    }
+  }
+
+  public validate(): {valid: boolean, errors: string[]} {
+    const errors = [];
+    const primaryKey = this.table.getPrimaryKey();
+    // Validate partition key defined on table is also defined as attribute in respective entity
+    if (!this.attributes.hasOwnProperty(primaryKey.pk)) {
+      errors.push(`Partition key "${primaryKey.pk}" is not defined in ${this.getEntity().constructor.name}`)
+    }
+    // Validate partition key defined on table is set in respective entity
+    if (this.attributes[primaryKey.pk].value === undefined) {
+      errors.push(`Partition key "${primaryKey.pk}" is not set in ${this.constructor.name}`)
+    }
+    // Validate sort key defined on table is also defined as attribute in respective entity
+    if (primaryKey.sk && !this.attributes.hasOwnProperty(primaryKey.sk)) {
+      errors.push(`Sort key "${primaryKey.sk}" is not defined in ${this.getEntity().constructor.name}`)
+    }
+    // Validate sort key defined on table is set in respective entity
+    if (this.attributes[primaryKey.sk].value === undefined) {
+      errors.push(`Sort key "${primaryKey.sk}" is not set in ${this.constructor.name}`)
+    }
+
+    for (let attributeName in this.attributes) {
+      const attribute = this.attributes[attributeName];
+      // Validate required attribute is set
+      if (attribute.required && attribute.value === undefined) {
+        errors.push(`"${attributeName}" is required on ${this.constructor.name}`);
+        continue;
+      }
+      // Skip validation of optional attribute that has not been set
+      if (!attribute.required && attribute.value === undefined) continue;
+
+      const result = this.validateAttribute(attribute, attribute.value);
+      if (result instanceof TypeError) {
+        errors.push(`TypeError: "${attributeName}" should be ${result.message}`);
+      }
+    }
+    return {
+      valid: !errors.length,
+      errors
+    }
+  }
+
   private validateAttribute(attribute: AttributeDefinition, value: any) {
     switch (attribute.type.toLowerCase()) {
       case 's':
@@ -210,7 +257,7 @@ class Model {
       case 'ns':
         if (! (value instanceof Array)) return new TypeError('number set');
         for (let v of value) {
-          if ((typeof value) !== 'number') return new TypeError('number set');
+          if ((typeof v) !== 'number') return new TypeError('number set');
         }
         break
       case 'bb':
@@ -221,7 +268,17 @@ class Model {
         // @ts-ignore
         if (typeof value != 'object') return new TypeError('object');
         break;
+
+      case 'l':
+        if (!(value instanceof Array)) return new TypeError('array');
+        const validTypes = ['string', 'number'];
+
+        for (let v of value) {
+          if (!validTypes.includes(typeof v)) return new TypeError('primitive')
+        }
+        break;
     }
+    return true;
   }
 
   private toPutCommandInput() {
