@@ -1,9 +1,11 @@
 import 'reflect-metadata';
-import {CreateTableCommand, DynamoDBClient, ResourceInUseException} from "@aws-sdk/client-dynamodb";
+import {
+  CreateTableCommandOutput,
+  DynamoDBClient,
+} from "@aws-sdk/client-dynamodb";
 import Model from "./model";
 import {Entity} from "../index";
-import Table from "./table";
-import {EntityConstructor, ModelConstructor, TableConstructor} from "./types";
+import {IDynamoRM, EntityConstructor, ModelConstructor, TableConstructor} from "./types";
 
 /**
  * @todo throw error if tables or client is undefined
@@ -34,7 +36,7 @@ export class DynamoRM {
     }
   }
 
-  public async createTables() {
+  public async createTables(): Promise<CreateTableCommandOutput[]> {
     const results = [];
     for ( let Constructor of this.tables ) {
       const table = new Constructor(this.client);
@@ -95,7 +97,7 @@ export class DynamoRM {
   }
 }
 
-export const create = (App: Function) => {
+export const create = (App: Function): IDynamoRM => {
   return new DynamoRM(App);
 }
 
