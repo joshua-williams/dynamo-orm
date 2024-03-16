@@ -1,6 +1,6 @@
 import Entity from "./entity";
 import Table from "./table";
-import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
+import {CreateTableCommandOutput, DynamoDBClient} from "@aws-sdk/client-dynamodb";
 import Model from "./model";
 
 export type EntityConstructor = new() => Entity;
@@ -71,7 +71,13 @@ export type ModelOptions = {
   table: TableConstructor
 }
 
-export type DynamoRM = {
+export type IDynamoRM = {
+  createTables: () => Promise<CreateTableCommandOutput[]>,
+  getTable: (tableName: string) => TableConstructor,
+  getTables: () => TableConstructor[],
+  getModel: (modelName: string) => ModelConstructor,
+  getModels: () => ModelConstructor[],
+  model: (modelName: string, attributes?: Record<string, any>) => Model,
 
 }
 export type DynamoRMOptions = {

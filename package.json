@@ -2,7 +2,9 @@
   "name": "dynamorm",
   "version": "1.0.0",
   "description": "DynamoRM is an object-relational mapper (ORM) for interacting with DynamoDB.",
-  "main": "index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["/dist"],
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
