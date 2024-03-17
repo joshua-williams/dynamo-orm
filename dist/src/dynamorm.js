@@ -16,7 +16,7 @@ class DynamoRM {
     client;
     constructor(DB) {
         this.tables = Reflect.getMetadata('tables', DB);
-        this.models = Reflect.getMetadata('models', DB);
+        this.models = Reflect.getMetadata('models', DB) || [];
         this.client = Reflect.getMetadata('client', DB);
         if (!this.tables || !this.client) {
             throw new Error('A dynamodb client and tables are required');

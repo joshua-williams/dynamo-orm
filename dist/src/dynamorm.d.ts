@@ -21,7 +21,7 @@ export declare class DynamoRM {
      * @param modelName
      * @param attributes
      */
-    model(modelName: string, attributes?: Record<string, any>): Model;
+    model<T>(modelName: string, attributes?: Record<string, any>): Model & T;
 }
 export declare const create: (App: Function) => IDynamoRM;
 declare const _default: {

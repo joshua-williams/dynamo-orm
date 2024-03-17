@@ -12,12 +12,12 @@ import {IDynamoRM, EntityConstructor, ModelConstructor, TableConstructor} from "
  */
 export class DynamoRM {
   private readonly tables: Array<any>;
-  private readonly models: Array<any>
+  private readonly models: Array<any>;
   private readonly client: DynamoDBClient;
 
   constructor(DB: Function) {
     this.tables = Reflect.getMetadata('tables', DB)
-    this.models = Reflect.getMetadata('models', DB)
+    this.models = Reflect.getMetadata('models', DB) || []
     this.client = Reflect.getMetadata('client', DB);
     if (!this.tables || !this.client) {
       throw new Error('A dynamodb client and tables are required')
@@ -73,7 +73,7 @@ export class DynamoRM {
    * @param modelName
    * @param attributes
    */
-  model(modelName: string, attributes?:Record<string, any>):Model {
+  model<T>(modelName: string, attributes?:Record<string, any>): Model & T {
     let Constructor:ModelConstructor = this.getModel(modelName);
     let model:Model;
 
@@ -93,7 +93,7 @@ export class DynamoRM {
       model.fill(attributes);
     }
 
-    return model;
+    return model as Model&T;
   }
 }
 

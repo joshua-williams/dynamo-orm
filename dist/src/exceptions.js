@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PrimaryKeyException = exports.ServiceUnavailableException = exports.TableNotFoundException = exports.DynamormException = void 0;
+exports.ValidationError = exports.PrimaryKeyException = exports.ServiceUnavailableException = exports.TableNotFoundException = exports.DynamormException = void 0;
 class DynamormException extends Error {
     constructor(message) {
         super(message);
@@ -25,3 +25,11 @@ class PrimaryKeyException extends DynamormException {
     }
 }
 exports.PrimaryKeyException = PrimaryKeyException;
+class ValidationError extends DynamormException {
+    messages;
+    constructor(messages) {
+        super(messages);
+        this.messages = messages;
+    }
+}
+exports.ValidationError = ValidationError;

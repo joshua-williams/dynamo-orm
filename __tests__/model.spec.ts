@@ -47,7 +47,6 @@ describe('model', () => {
         fillData.author = undefined;
         model.fill(fillData)
         const result = model.validate();
-        console.log(result);
         expect(result.valid).toBe(false);
         expect(result.errors).toHaveLength(1);
         expect(result.errors[0]).toContain('author');

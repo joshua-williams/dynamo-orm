@@ -21,3 +21,9 @@ export class PrimaryKeyException extends DynamormException {
     super(message);
   }
 }
+
+export class ValidationError extends DynamormException {
+  constructor(public messages: string[]) {
+    super(messages);
+  }
+}
