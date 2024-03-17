@@ -126,6 +126,7 @@ export default class Table {
     }
   }
 
+
   public toInputKey(primaryKey: PrimaryKey) {
     const {pk, sk} = this.getPrimaryKeyDefinition();
     if (!sk && primaryKey.sk) {

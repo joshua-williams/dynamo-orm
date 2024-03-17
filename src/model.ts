@@ -3,6 +3,7 @@ import {
   AttributeDefinitions,
   Attributes,
   ModelConstructor,
+  PrimaryKey,
 } from "./types";
 import {
   DeleteItemCommand,
@@ -16,7 +17,7 @@ import {
   DynamormException,
   PrimaryKeyException,
   ServiceUnavailableException,
-  TableNotFoundException
+  TableNotFoundException, ValidationError
 } from "./exceptions";
 import Table from "./table";
 import Entity from "./entity";
@@ -24,13 +25,15 @@ import Entity from "./entity";
 class Model {
   public name: string;
   protected table: Table;
-
+  protected entity: Entity;
   protected attributes: AttributeDefinitions = {};
+  public readonly primaryKey: PrimaryKey;
 
   constructor( private client: DynamoDBClient ) {
     this.table = new (Reflect.getMetadata('table', this.constructor));
-    const entity:Entity = this.table.getEntity(true);
-    this.attributes = entity.getAttributeDefinitions();
+    this.entity = this.table.getEntity(true);
+    this.attributes = this.entity.getAttributeDefinitions();
+    this.primaryKey = this.table.getPrimaryKey();
 
     for (let attribute in this.attributes) {
       Object.defineProperty(this, attribute, {
@@ -84,11 +87,26 @@ class Model {
     throw new Error(`Attribute not found: ${attributeName}`)
   }
 
+  /**
+   * @description Gets PrimaryKey including values
+   */
+  public getPrimaryKey(): PrimaryKey {
+    const primaryKeyDefinition = this.table.getPrimaryKeyDefinition();
+    const primaryKey: PrimaryKey = {
+      pk: this.attributes[primaryKeyDefinition.pk.AttributeName].value,
+      sk: undefined
+    }
+    if (primaryKeyDefinition.sk) {
+      primaryKey.sk = this.attributes[primaryKeyDefinition.sk.AttributeName].value;
+    }
+    return primaryKey;
+  }
+
   public getAttributes() {
     return this.attributes;
   }
 
-  public getAttributeValues() {
+  public getAttributeValues(omitUndefined: boolean = true) {
     return Object.keys(this.attributes).reduce((attributes, attribute) => {
       attributes[attribute] = this.attributes[attribute].value;
       return attributes;
@@ -104,6 +122,9 @@ class Model {
   }
 
   public async save(): Promise<PutItemCommandOutput> {
+    const { valid, errors} = this.validate();
+    if (!valid)  throw new ValidationError(errors);
+
     const input = this.toPutCommandInput();
     const command = new PutItemCommand(input);
     let result: PutItemCommandOutput;
@@ -130,19 +151,31 @@ class Model {
     return result;
   }
 
+  public async fresh(): Promise<boolean> {
+    const {valid, errors} = this.validatePrimaryKey();
+    if (!valid) {
+      throw new PrimaryKeyException(errors[0]);
+    }
+    const model = await this.find();
+    if (model === undefined) return false;
+    for (let attributeName in this.attributes) {
+      if (model.attributes.hasOwnProperty(attributeName)) {
+        this.attributes[attributeName].value = model.attributes[attributeName].value
+      }
+    }
+    return true;
+  }
+
   public async find(pk?: string, sk?: string): Promise<Model>{
     const primaryKeyDefinition = this.table.getPrimaryKeyDefinition();
     if (primaryKeyDefinition.sk && !sk) {
       throw new PrimaryKeyException(`Failed to fetch item. Primary key requires partition key and sort key on ${this.table.constructor.name}`)
     }
-    const primaryKey = {
-      pk: pk || this.table.getPrimaryKey().pk,
-      sk: sk || this.table.getPrimaryKey().sk,
-    }
+    const primaryKeyValues = this.getPrimaryKey();
     const input: GetItemCommandInput = {
       TableName: this.table.getName(),
       // @ts-ignore
-      Key: this.table.toInputKey(primaryKey)
+      Key: this.table.toInputKey(primaryKeyValues)
     }
     const command = new GetItemCommand(input);
     let result: GetItemCommandOutput;
@@ -199,25 +232,37 @@ class Model {
     }
   }
 
-  public validate(): {valid: boolean, errors: string[]} {
-    const errors = [];
+  private validatePrimaryKey() {
     const primaryKey = this.table.getPrimaryKey();
+    const className = this.constructor.name === 'DynamicModel' ? this.entity.constructor.name : this.constructor.name;
+    const errors = [];
     // Validate partition key defined on table is also defined as attribute in respective entity
     if (!this.attributes.hasOwnProperty(primaryKey.pk)) {
-      errors.push(`Partition key "${primaryKey.pk}" is not defined in ${this.getEntity().constructor.name}`)
+      errors.push(`Partition key "${primaryKey.pk}" is not defined in ${className}`)
     }
     // Validate partition key defined on table is set in respective entity
     if (this.attributes[primaryKey.pk].value === undefined) {
-      errors.push(`Partition key "${primaryKey.pk}" is not set in ${this.constructor.name}`)
+      errors.push(`Partition key "${primaryKey.pk}" is not set in ${className}`)
     }
     // Validate sort key defined on table is also defined as attribute in respective entity
     if (primaryKey.sk && !this.attributes.hasOwnProperty(primaryKey.sk)) {
-      errors.push(`Sort key "${primaryKey.sk}" is not defined in ${this.getEntity().constructor.name}`)
+      errors.push(`Sort key "${primaryKey.sk}" is not defined in ${className}`)
     }
     // Validate sort key defined on table is set in respective entity
-    if (this.attributes[primaryKey.sk].value === undefined) {
+    if (primaryKey.sk && this.attributes[primaryKey.sk].value === undefined) {
       errors.push(`Sort key "${primaryKey.sk}" is not set in ${this.constructor.name}`)
     }
+    return {
+      valid: !errors.length,
+      errors
+    }
+  }
+
+  public validate(): {valid: boolean, errors: string[]} {
+    const errors = [];
+
+    const result = this.validatePrimaryKey();
+    if (!result.valid) errors.push(...result.errors);
 
     for (let attributeName in this.attributes) {
       const attribute = this.attributes[attributeName];

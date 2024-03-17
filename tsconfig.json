@@ -11,5 +11,5 @@
     "declarationMap": true,
 
   },
-  "include": ["*.ts", "src/**/*", "*.ts"]
+  "include": ["*.ts", "src/**/*"]
 }

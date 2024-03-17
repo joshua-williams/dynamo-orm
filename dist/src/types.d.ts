@@ -2,11 +2,15 @@ import Entity from "./entity";
 import Table from "./table";
 import { CreateTableCommandOutput, DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import Model from "./model";
-export type EntityConstructor = new () => Entity;
+export type EntityConstructor = {
+    name: string;
+    new (): Entity;
+};
 export type Entities = Record<string, EntityConstructor>;
 export interface EntityAttributes extends Record<string | symbol, any> {
 }
 export type Attributes = Record<string, any>;
+export type DTO = Record<string, any>;
 export type AttributeDefinition = {
     type: string;
     required?: boolean;
@@ -63,7 +67,7 @@ export type IDynamoRM = {
     getTables: () => TableConstructor[];
     getModel: (modelName: string) => ModelConstructor;
     getModels: () => ModelConstructor[];
-    model: (modelName: string, attributes?: Record<string, any>) => Model;
+    model: <T>(modelName: string, attributes?: Record<string, any>) => Model & T;
 };
 export type DynamoRMOptions = {
     tables: Array<any>;

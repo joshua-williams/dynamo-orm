@@ -6,6 +6,8 @@
   "types": "dist/index.d.ts",
   "files": ["/dist"],
   "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc -w",
     "test": "jest",
     "test:watch": "jest --watch",
     "start": "docker compose up"
