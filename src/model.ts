@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import {
   AttributeDefinition,
   AttributeDefinitions,
@@ -6,7 +7,7 @@ import {
   PrimaryKey,
 } from "./types";
 import {
-  DeleteItemCommand,
+  DeleteItemCommand, DeleteItemCommandOutput,
   DeleteItemInput,
   DynamoDBClient, GetItemCommand, GetItemCommandInput, GetItemCommandOutput,
   PutItemCommand,
@@ -108,6 +109,8 @@ class Model {
 
   public getAttributeValues(omitUndefined: boolean = true) {
     return Object.keys(this.attributes).reduce((attributes, attribute) => {
+      const value = this.attributes[attribute].value;
+      if (value == undefined && omitUndefined) return attributes;
       attributes[attribute] = this.attributes[attribute].value;
       return attributes;
     }, {})
@@ -135,7 +138,7 @@ class Model {
 
       switch ( e.constructor ) {
         case ResourceNotFoundException:
-          const { statusCode, reason } = e.$response;
+          const { statusCode } = e.$response;
 
           switch( statusCode ) {
             case 400:
@@ -172,6 +175,9 @@ class Model {
       throw new PrimaryKeyException(`Failed to fetch item. Primary key requires partition key and sort key on ${this.table.constructor.name}`)
     }
     const primaryKeyValues = this.getPrimaryKey();
+    if (pk) primaryKeyValues.pk = pk;
+    if (sk) primaryKeyValues.sk = sk;
+
     const input: GetItemCommandInput = {
       TableName: this.table.getName(),
       // @ts-ignore
@@ -184,7 +190,7 @@ class Model {
       if (!result.hasOwnProperty('Item')) return;
       const attributes = {};
       for (let attribute in result.Item) {
-        attributes[attribute] = Object.values(result.Item[attribute])[0];;
+        attributes[attribute] = Object.values(result.Item[attribute])[0];
       }
       const modelConstructor = this.constructor as ModelConstructor;
       const model = new modelConstructor(this.client);
@@ -217,7 +223,7 @@ class Model {
       ReturnValues: "ALL_OLD"
     }
     const command = new DeleteItemCommand(input);
-    let result;
+    let result:DeleteItemCommandOutput;
     try {
       result = await this.client.send(command);
       return result.hasOwnProperty('Attributes');
