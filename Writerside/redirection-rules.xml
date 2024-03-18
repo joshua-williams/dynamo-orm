@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rules SYSTEM "https://resources.jetbrains.com/writerside/1.0/redirection-rules.dtd">
+<rules>
+    <!-- format is as follows
+    <rule id="<unique id>">
+        <accepts>page.html</accepts>
+    </rule>
+    -->
+    <rule id="24429e29">
+        <description>Created after removal of "About DynamORM" from DynamORM</description>
+        <accepts>starter-topic.html</accepts>
+    </rule>
+    <rule id="48eb2940">
+        <description>Created after removal of "Overview" from DynamORM</description>
+        <accepts>Overview.html</accepts>
+    </rule>
+    <rule id="2d710a8e">
+        <description>Created after removal of "Reference" from DynamORM</description>
+        <accepts>Reference.html</accepts>
+    </rule>
+    <rule id="78fe2a0f">
+        <description>Created after removal of "Installation" from DynamORM</description>
+        <accepts>Installation.html</accepts>
+    </rule>
+    <rule id="2f9e3634">
+        <description>Created after removal of "Getting Started" from DynamORM</description>
+        <accepts>Starter.html</accepts>
+    </rule>
+</rules>
