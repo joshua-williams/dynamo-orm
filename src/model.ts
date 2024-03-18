@@ -282,7 +282,7 @@ class Model {
 
       const result = this.validateAttribute(attribute, attribute.value);
       if (result instanceof TypeError) {
-        errors.push(`TypeError: "${attributeName}" should be ${result.message}`);
+        errors.push(`TypeError: "${attributeName}" attribute should be ${result.message} in ${this.constructor.name}`);
       }
     }
     return {

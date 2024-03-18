@@ -2,6 +2,7 @@ import Entity from "./entity";
 import Table from "./table";
 import {CreateTableCommandOutput, DynamoDBClient} from "@aws-sdk/client-dynamodb";
 import Model from "./model";
+import QueryBuilder from './query';
 
 export type EntityConstructor = {
   name: string,
@@ -76,13 +77,15 @@ export type ModelOptions = {
   table: TableConstructor
 }
 
-export type IDynamoRM = {
+export type DynamormIoC = {
   createTables: () => Promise<CreateTableCommandOutput[]>,
+  getClient: () => DynamoDBClient,
   getTable: (tableName: string) => TableConstructor,
   getTables: () => TableConstructor[],
   getModel: (modelName: string) => ModelConstructor,
   getModels: () => ModelConstructor[],
   model: <T>(modelName: string, attributes?: Record<string, any>) => Model & T,
+  query: (tableName: string) => QueryBuilder
 
 }
 export type DynamoRMOptions = {
@@ -90,3 +93,4 @@ export type DynamoRMOptions = {
   client: DynamoDBClient,
   models?: Array<any>
 }
+
