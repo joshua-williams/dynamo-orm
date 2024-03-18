@@ -1,5 +1,6 @@
 import {DynamormIoC, TableConstructor} from './types';
 import {QueryException} from './exceptions';
+import * as validate from './validate';
 import Entity from './entity';
 import Model from './model'
 import {ExecuteStatementCommand, ExecuteStatementCommandInput} from '@aws-sdk/client-dynamodb';
@@ -70,6 +71,7 @@ export default class QueryBuilder {
     this.query.conditions.push(condition);
     return this;
   }
+
   and(attribute: string, operator:  ComparisonOperator, value: any) {
     if (!this.query.conditions.length) throw new QueryException('"and()" must follow at least one "where()" call');
     this.query.conditions.push(new QueryOperator('and'))
@@ -141,8 +143,13 @@ export default class QueryBuilder {
     Statement += ` ${attributes} FROM ${this.query.table.getName()} `
     if (this.query.conditions.length) Statement += '\nWHERE\n'
     this.query.conditions.forEach(condition => {
-
       if (condition instanceof QueryCondition) {
+        const attributeDefinitions = this.query.entity.getAttributeDefinitions();
+        const attributeDefinition = attributeDefinitions[condition.attribute];
+        const validationResult = validate.attribute(attributeDefinition, condition.value);
+        if (validationResult instanceof TypeError) {
+          throw new QueryException(`attribute "${condition.attribute}" should be of type ${validationResult.message}`);
+        }
         Statement += `  ${condition.attribute} ${condition.operator} '${condition.value}'`
       } else if (condition instanceof QueryOperator) {
         Statement += ` ${condition} `
