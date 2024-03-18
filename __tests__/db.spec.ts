@@ -115,4 +115,20 @@ describe('app', () => {
       model.save();
     })
   })
+
+  describe('query', () => {
+    it('should query table', async () => {
+      const model = await db.query('Cookbooks')
+        .where('title', '=', 'Southern Sweets')
+        .first();
+      const attributes = model.getAttributeValues();
+      const expectedAttributes = {
+        title: 'Southern Sweets',
+        author: 'dev@studiowebfx.com',
+        image: [ 'http://images.com/logo.png' ]
+      }
+      expect(model).toBeInstanceOf(Model);
+      expect(attributes).toMatchObject(expectedAttributes)
+    })
+  })
 })

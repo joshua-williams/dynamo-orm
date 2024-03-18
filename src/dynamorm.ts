@@ -5,23 +5,32 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import Model from "./model";
 import {Entity} from "../index";
-import {IDynamoRM, EntityConstructor, ModelConstructor, TableConstructor} from "./types";
-
+import {DynamormIoC, EntityConstructor, ModelConstructor, TableConstructor} from "./types";
+import QueryBuilder from './query';
 /**
  * @todo throw error if tables or client is undefined
  */
-export class DynamoRM {
+export class DynamoRM implements DynamormIoC {
   private readonly tables: Array<any>;
   private readonly models: Array<any>;
   private readonly client: DynamoDBClient;
+  private readonly queryBuilder: QueryBuilder;
 
   constructor(DB: Function) {
     this.tables = Reflect.getMetadata('tables', DB)
     this.models = Reflect.getMetadata('models', DB) || []
     this.client = Reflect.getMetadata('client', DB);
+    this.queryBuilder = new QueryBuilder(this);
     if (!this.tables || !this.client) {
       throw new Error('A dynamodb client and tables are required')
     }
+  }
+
+  query(tableName: string) {
+    return this.queryBuilder.table(tableName)
+  }
+  getClient() {
+    return this.client;
   }
 
   getTables() {
@@ -30,7 +39,12 @@ export class DynamoRM {
 
   getTable(tableName: string): TableConstructor {
     for (let table of this.tables) {
+      // Get table by Class/Constructor name
       if (tableName === table.name) {
+        return table;
+      }
+      // Get table by table name
+      if (Reflect.getMetadata('name', table) == tableName) {
         return table;
       }
     }
@@ -97,7 +111,7 @@ export class DynamoRM {
   }
 }
 
-export const create = (App: Function): IDynamoRM => {
+export const create = (App: Function): DynamormIoC => {
   return new DynamoRM(App);
 }
 
