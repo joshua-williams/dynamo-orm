@@ -12,7 +12,7 @@ import {
   DynamoDBClient, GetItemCommand, GetItemCommandInput, GetItemCommandOutput,
   PutItemCommand,
   PutItemCommandOutput,
-  ResourceNotFoundException
+  ResourceNotFoundException, UpdateItemCommand
 } from "@aws-sdk/client-dynamodb";
 import {
   DynamormException,
@@ -22,6 +22,13 @@ import {
 } from "./exceptions";
 import Table from "./table";
 import Entity from "./entity";
+import {
+  toExpressionAttributeNamePlaceholder,
+  toExpressionAttributeNames, toExpressionAttributeValuePlaceholder,
+  toExpressionAttributeValues,
+  toInputKey
+} from './command-input-converter';
+import {UpdateCommandInput} from '@aws-sdk/lib-dynamodb';
 
 class Model {
   public name: string;
@@ -64,6 +71,7 @@ class Model {
         }
         break;
     }
+    return this;
   }
 
   /**
@@ -75,6 +83,7 @@ class Model {
     if (this.attributes.hasOwnProperty(attributeName)) {
       this.attributes[attributeName].value = value;
     }
+    return this;
   }
 
   /**
@@ -107,8 +116,10 @@ class Model {
     return this.attributes;
   }
 
-  public getAttributeValues(omitUndefined: boolean = true) {
+  public getAttributeValues(omitUndefined: boolean = true, omitPrimaryKey = false) {
     return Object.keys(this.attributes).reduce((attributes, attribute) => {
+      if (attribute == this.table.getPrimaryKey().pk && omitPrimaryKey) return attributes;
+      if (attribute == this.table.getPrimaryKey().sk && omitPrimaryKey) return attributes;
       const value = this.attributes[attribute].value;
       if (value == undefined && omitUndefined) return attributes;
       attributes[attribute] = this.attributes[attribute].value;
@@ -228,7 +239,19 @@ class Model {
       result = await this.client.send(command);
       return result.hasOwnProperty('Attributes');
     } catch (e) {
-      console.log(e);
+      throw new DynamormException('failed to delete item');
+    }
+  }
+
+  public async update(dto: Record<string, any>) {
+    const { valid, errors} = this.validate();
+    if (!valid)  throw new ValidationError(errors);
+    const input = this.toUpdateCommandInput();
+    const command = new UpdateItemCommand(input);
+    try {
+      await this.client.send(command);
+    } catch (e) {
+      throw new DynamormException('Failed to update item')
     }
   }
 
@@ -343,6 +366,38 @@ class Model {
       input.Item[name] = {
         [attribute.type]: attribute.value
       }
+    }
+    return input;
+  }
+
+  private toUpdateCommandInput(): UpdateCommandInput {
+    const { valid, errors } = this.validatePrimaryKey();
+    if (!valid) throw new PrimaryKeyException(errors);
+    const primaryKey = this.getPrimaryKey();
+    const primaryKeyDefinitions = this.table.getPrimaryKeyDefinition();
+    const attributes = this.getAttributeValues(true, true);
+    // primary key values can not be updated so they are removed before the following UpdateExpression is generated
+    delete attributes[this.table.getPrimaryKey().pk];
+    if (primaryKey.sk) delete attributes[this.table.getPrimaryKey().sk]
+
+    let UpdateExpression = 'SET ';
+
+    for (let attribute in attributes) {
+      const namePlaceholder = toExpressionAttributeNamePlaceholder(attribute);
+      const valuePlaceholder = toExpressionAttributeValuePlaceholder(attribute);
+      UpdateExpression += `${namePlaceholder} = ${valuePlaceholder}, `;
+    }
+
+    UpdateExpression = UpdateExpression.substring(0, UpdateExpression.length - 2);
+    const attributeDefinitions = this.entity.getAttributeDefinitions();
+
+    const input: UpdateCommandInput = {
+      ExpressionAttributeNames: toExpressionAttributeNames(attributes),
+      ExpressionAttributeValues: toExpressionAttributeValues(attributes, attributeDefinitions),
+      Key: toInputKey(primaryKey, primaryKeyDefinitions),
+      ReturnValues: 'NONE',
+      TableName: this.table.getName(),
+      UpdateExpression
     }
     return input;
   }

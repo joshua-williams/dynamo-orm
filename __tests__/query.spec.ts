@@ -48,7 +48,6 @@ describe('Query', () => {
     it('should select items by one of multiple attributes', async () => {
       const collection = await query
         .table('Cookbooks')
-        //.select('title', 'description', 'author')
         .where('title', '=', 'Southern Savories')
         .or('title', '=', 'Southern Smothered')
         .get()

@@ -4,8 +4,11 @@ export class DynamormException extends Error {
   }
 }
 
-export class TableNotFoundException extends DynamormException {
-  constructor(message) {
+export class PrimaryKeyException extends DynamormException {
+  constructor(message: string | string[]) {
+    if (message instanceof Array) {
+      message = message.join('\n')
+    }
     super(message);
   }
 }
@@ -16,7 +19,7 @@ export class ServiceUnavailableException extends DynamormException {
   }
 }
 
-export class PrimaryKeyException extends DynamormException {
+export class TableNotFoundException extends DynamormException {
   constructor(message) {
     super(message);
   }
@@ -27,6 +30,7 @@ export class QueryException extends DynamormException {
     super(message);
   }
 }
+
 export class ValidationError extends DynamormException {
   constructor(public messages: string[]) {
     super(messages);
