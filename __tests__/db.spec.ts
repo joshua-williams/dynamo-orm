@@ -44,7 +44,7 @@ describe('app', () => {
         summary: { type: 'S', required: false, value: undefined },
         description: { type: 'S', required: false, value: undefined },
         author: { type: 'S', required: false, value: undefined },
-        image: { type: 'SS', required: false, value: undefined },
+        image: { type: 'SS', required: true, value: undefined },
         reviews: { type: 'N', required: false, value: undefined }
       }
       expect(model.constructor.name).toBe('DynamicModel')

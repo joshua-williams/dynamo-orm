@@ -2,7 +2,8 @@ import {CookbookModel} from "./fixtures/models";
 import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
 import Model from "../src/model";
 
-const client = new DynamoDBClient({endpoint: 'http://localhost:8000'});
+const config = {endpoint: 'http://localhost:8000'};
+const client = new DynamoDBClient(config);
 describe('model', () => {
   let model: any;
 
@@ -139,7 +140,8 @@ describe('model', () => {
     it('should save', async () => {
       model.fill({
         title: "Southern Savories",
-        author: 'com.joshua360@gmail.com'
+        author: 'com.joshua360@gmail.com',
+        image: ['logo.png']
       });
       const result = await model.save();
       expect(result).toHaveProperty('$metadata.httpStatusCode', 200);
@@ -157,8 +159,26 @@ describe('model', () => {
 
   describe('delete', () => {
     it('should delete item by primary key', async () => {
+      await model.fill({
+        title: 'Southern Savories',
+        author: 'com.joshua360@gmail.com',
+        image: ['image.png']
+      }).save();
       const result = await model.delete('Southern Savories','com.joshua360@gmail.com');
       expect(result).toBe(true);
+    })
+  })
+
+  describe('update', () => {
+    it('should update item', async () => {
+      model.fill({
+        title: 'Southern Smothered',
+        author: 'dev@studiowebfx.com',
+        description: 'Another Cookbook',
+        image: ["http://images.com/logo.png", "http://images.com/logo2.png"]
+      })
+      const updateModel = async () => await model.update();
+      expect(updateModel).not.toThrow()
     })
   })
 })
