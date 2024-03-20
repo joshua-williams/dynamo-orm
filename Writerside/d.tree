@@ -7,5 +7,12 @@
                  start-page="Introduction.topic">
 
     <toc-element topic="Introduction.topic"/>
-    <toc-element topic="Quick-Start.topic"/>
+    <toc-element topic="Quick-Start.topic">
+        <toc-element topic="Database-Setup.topic"/>
+        <toc-element topic="Create-DynamoDB-Table.topic"/>
+        <toc-element topic="Bootstrap-Container.topic"/>
+    </toc-element>
+    <toc-element topic="Query-Builder.topic">
+        <toc-element topic="Operators.topic"/>
+    </toc-element>
 </instance-profile>
