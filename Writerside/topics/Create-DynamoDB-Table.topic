@@ -17,11 +17,7 @@
 
         const db = DynamoFactory.create(container);
 
-        db.createTables()
-        .then(() => console.log('tables created'))
-        .catch(e) {
-        console.log(e);
-        }
+        await db.createTables()
       </code-block>
     </step>
     <step>

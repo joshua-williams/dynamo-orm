@@ -18,6 +18,7 @@
 
   <p>Use the create method to create an instance of DynamORM with which you can interact with DynamoDB</p>
 
+  <p>Create database instance <code>db.ts</code></p>
   <code-block lang="typescript">
     import { DynamormFactory } from 'dynamorm';
     import dbContainer from "./container";
