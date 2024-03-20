@@ -30,6 +30,7 @@ type Query = {
   statement: string,
   attributes: string[],
   conditions: Array< QueryCondition | QueryOperator> ,
+  limit: number,
 }
 
 export default class QueryBuilder {
@@ -39,7 +40,8 @@ export default class QueryBuilder {
     table: undefined,
     statement: undefined,
     attributes: [],
-    conditions: []
+    conditions: [],
+    limit: undefined,
   };
 
   constructor(private db: DynamormIoC) {}
@@ -59,6 +61,11 @@ export default class QueryBuilder {
       }
       this.query.attributes.push(attribute);
     })
+    return this;
+  }
+
+  limit(limit: number) {
+    this.query.limit = limit;
     return this;
   }
 
@@ -82,7 +89,6 @@ export default class QueryBuilder {
     if (!this.query.conditions.length) throw new QueryException('"or()" must follow at least one "where()" call');
     this.query.conditions.push(new QueryOperator('or'));
     return this.where(attribute, operator, value);
-
   }
 
   private attributesToModel(attributes): Model {
@@ -155,7 +161,9 @@ export default class QueryBuilder {
         Statement += ` ${condition} `
       }
     })
-    return { Statement };
+    const input:ExecuteStatementCommandInput = { Statement };
+    if (this.query.limit) input.Limit = this.query.limit;
+    return input;
   }
 
 }

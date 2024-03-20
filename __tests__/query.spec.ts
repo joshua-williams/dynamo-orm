@@ -29,6 +29,11 @@ describe('Query', () => {
       expect(collection).toHaveLength(1);
       expect(collection[0]).toBeInstanceOf(Model)
     })
+
+    it('should limit results', async () => {
+      const collection = await query.table('Cookbooks').limit(3).get();
+      expect(collection).toHaveLength(3);
+    })
   })
 
   describe('AND Logical Operator', () => {
