@@ -6,4 +6,8 @@
         <accepts>page.html</accepts>
     </rule>
     -->
+    <rule id="2d99ac9f">
+        <description>Created after removal of "Database Container" from DynamORM</description>
+        <accepts>Database-Container.html</accepts>
+    </rule>
 </rules>

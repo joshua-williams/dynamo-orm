@@ -19,7 +19,7 @@
       <def title="Entity">An abstract class that represents a record in dynamodb</def>
       <def title="Model">An object that exposes an api to perform CRUD operations on an Entity</def>
       <def title="QueryBuilder">A fluent query builder for executing dynamodb commands</def>
-      <def title="Container">An inversion-of-control (IOC) container for creating Table, Entity, Model, and QueryBuilder instances</def>
+      <def title="Container">A DynamORM application instance for interfacing with DynamoDB</def>
     </deflist>
 
   </chapter>
