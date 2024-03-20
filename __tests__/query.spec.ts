@@ -34,6 +34,16 @@ describe('Query', () => {
       const collection = await query.table('Cookbooks').limit(3).get();
       expect(collection).toHaveLength(3);
     })
+
+    it('should use select.from.where', async () => {
+      const model = await query
+        .select('*')
+        .from('Cookbooks')
+        .where('title', '=', 'Southern Savories')
+        .first()
+      expect(model).toBeInstanceOf(Model);
+
+    })
   })
 
   describe('AND Logical Operator', () => {

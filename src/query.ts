@@ -47,14 +47,22 @@ export default class QueryBuilder {
   constructor(private db: DynamormIoC) {}
 
   table(tableName: string) {
-    this.query.table = this.db.getTable(tableName);
-    if (!this.query.table) throw new QueryException(`Table not defined "${tableName}"`);
+    const table = this.db.getTable(tableName);
+    if (!table) {
+      throw new QueryException(`Table not defined "${tableName}"`);
+    }
+    this.query.table = table;
     this.query.entity = this.query.table.getEntity(true);
     return this;
   }
 
+  from(tableName: string) {
+    return this.table(tableName);
+  }
+
   select(...attributes) {
     this.query.type = 'select';
+    if (attributes.length == 1 && attributes[0] == '*') return this;
     attributes.forEach(attribute => {
       if (!this.query.entity.hasOwnProperty(attribute)) {
         throw new QueryException(`attribute "${attribute}" not defined in ${this.query.entity.constructor.name}`)
@@ -105,12 +113,15 @@ export default class QueryBuilder {
     Reflect.defineMetadata('table', this.query.table, DynamicModel);
     return new DynamicModel(this.db.getClient());
   }
+
   async first(): Promise<Model> {
+    this.query.limit = 1;
     const collection = await this.get();
     if (collection.length) return collection[0];
   }
 
   async get(): Promise<Model[]> {
+    if (!this.query.table) throw new QueryException(`Table not defined"`);
     const commandInput = this.toSelectStatementCommandInput();
     const command = new ExecuteStatementCommand(commandInput);
     let response;
