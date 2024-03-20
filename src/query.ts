@@ -151,6 +151,20 @@ export default class QueryBuilder {
     }, []);
   }
 
+  async delete() {
+    if (!this.query.table) throw new QueryException(`Table not defined"`);
+    const conditions = this.toInputConditions();
+    const Statement = `DELETE FROM ${this.query.table.getName()} WHERE ${conditions}`
+    const input: ExecuteStatementCommandInput = {Statement};
+    const command = new ExecuteStatementCommand(input);
+    try {
+      const r = await this.db.getClient().send(command);
+      console.log(r)
+    } catch (e) {
+      throw new QueryException(e.message);
+    }
+  }
+
   private toSelectStatementCommandInput(): ExecuteStatementCommandInput {
     let Statement = 'SELECT';
     if (!this.query.table) {
@@ -159,6 +173,14 @@ export default class QueryBuilder {
     const attributes = this.query.attributes.length ? this.query.attributes.join(', ') : '*'
     Statement += ` ${attributes} FROM ${this.query.table.getName()} `
     if (this.query.conditions.length) Statement += '\nWHERE\n'
+    Statement+= this.toInputConditions();
+    const input:ExecuteStatementCommandInput = { Statement };
+    if (this.query.limit) input.Limit = this.query.limit;
+    return input;
+  }
+
+  private toInputConditions() {
+    let input = '';
     this.query.conditions.forEach(condition => {
       if (condition instanceof QueryCondition) {
         const attributeDefinitions = this.query.entity.getAttributeDefinitions();
@@ -167,14 +189,11 @@ export default class QueryBuilder {
         if (validationResult instanceof TypeError) {
           throw new QueryException(`attribute "${condition.attribute}" should be of type ${validationResult.message}`);
         }
-        Statement += `  ${condition.attribute} ${condition.operator} '${condition.value}'`
+        input += `  ${condition.attribute} ${condition.operator} '${condition.value}'`
       } else if (condition instanceof QueryOperator) {
-        Statement += ` ${condition} `
+        input += ` ${condition} `
       }
     })
-    const input:ExecuteStatementCommandInput = { Statement };
-    if (this.query.limit) input.Limit = this.query.limit;
     return input;
   }
-
 }

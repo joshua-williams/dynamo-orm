@@ -31,7 +31,6 @@ import {
 import {UpdateCommandInput} from '@aws-sdk/lib-dynamodb';
 
 class Model {
-  public name: string;
   protected table: Table;
   protected entity: Entity;
   protected attributes: AttributeDefinitions = {};
@@ -243,7 +242,8 @@ class Model {
     }
   }
 
-  public async update(dto: Record<string, any>) {
+  public async update(dto?: Record<string, any>) {
+    if (dto) this.fill(dto);
     const { valid, errors} = this.validate();
     if (!valid)  throw new ValidationError(errors);
     const input = this.toUpdateCommandInput();
@@ -297,7 +297,7 @@ class Model {
       const attribute = this.attributes[attributeName];
       // Validate required attribute is set
       if (attribute.required && attribute.value === undefined) {
-        errors.push(`"${attributeName}" is required on ${this.constructor.name}`);
+        errors.push(`"${attributeName}" is required on ${this.table.getName()} table`);
         continue;
       }
       // Skip validation of optional attribute that has not been set
