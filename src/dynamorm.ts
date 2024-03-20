@@ -83,7 +83,7 @@ export class DynamoRM implements DynamormIoC {
   }
 
   /**
-   * @description Gets instance of model
+   * @description Get model instance by table name, table class name or entity class name
    * @param modelName
    * @param attributes
    */
@@ -95,6 +95,11 @@ export class DynamoRM implements DynamormIoC {
       model = new Constructor(this.client);
     } else {
       for (let table of this.tables) {
+        if (modelName == table.getName()) {
+          model = this.tableToModel(table);
+          break;
+        }
+
         const entityConstructor: EntityConstructor = table.getEntity();
         if (entityConstructor.name == modelName) {
           model = this.tableToModel(table);
