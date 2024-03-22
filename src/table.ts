@@ -1,4 +1,4 @@
-import {EntityConstructor, PrimaryKey, PrimaryKeyDefinition} from "./types";
+import {CreateTableOption, EntityConstructor, PrimaryKey, PrimaryKeyDefinition} from "./types";
 import {
   CreateTableCommand,
   CreateTableCommandInput, CreateTableCommandOutput, DescribeTableCommand, DescribeTableCommandOutput,
@@ -147,7 +147,14 @@ export default class Table {
     return Key;
   }
 
-  public async create() {
+  public async createIfNotExists() {
+
+  }
+  public async create(option?: CreateTableOption) {
+    if (option) {
+      const tableDescription = await this.describe();
+      if (option === 'IF_NOT_EXISTS' && tableDescription) return;
+    }
     const commandInput = this.toCreateCommandInput();
     const command = new CreateTableCommand(commandInput);
     let message = `Failed to save table ${this.constructor.name}`;

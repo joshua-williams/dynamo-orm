@@ -6,7 +6,7 @@ import QueryBuilder from './query';
 
 export type EntityConstructor = {
   name: string,
-  new(): Entity
+  new(): Entity,
 }
 
 export type Entities = Record<string, EntityConstructor>
@@ -64,10 +64,12 @@ export type TableConstructor = {
 
 export type TableOptions = {
   name: string,
-  primaryKey: PrimaryKey
+  primaryKey: PrimaryKey,
+  entity: EntityConstructor,
   autoCreate?: boolean,
-  entity: any
 }
+
+export type CreateTableOption = 'IF_NOT_EXISTS' | 'DROP_IF_EXISTS';
 
 export type ModelConstructor = {
   new(client: DynamoDBClient): Model,

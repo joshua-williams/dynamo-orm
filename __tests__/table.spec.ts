@@ -1,7 +1,7 @@
 import db from "./fixtures/db";
-import {Table} from "../index";
-import {CookbookTable} from "./fixtures/tables";
-import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
+import {attribute, Entity, Table, table as TableDecorator} from "../index";
+import { CookbookTable } from "./fixtures/tables";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
 describe('table', () => {
   const config = {endpoint: 'http://localhost:8000'};
@@ -34,28 +34,49 @@ describe('table', () => {
     })
   })
 
-
-  it('should output CreateCommandInput', () => {
-    const expectedCommandInput = {
-      TableName: 'Cookbooks',
-      AttributeDefinitions: [
-        { AttributeName: 'title', AttributeType: 'S' },
-        { AttributeName: 'author', AttributeType: 'S' }
-      ],
-      KeySchema: [
-        { AttributeName: 'title', KeyType: 'HASH' },
-        { AttributeName: 'author', KeyType: 'RANGE' }
-      ],
-      ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+  describe('Create Table', () => {
+    class TestEntity extends Entity {
+      @attribute()
+      pk: string;
+      @attribute()
+      sk: string;
     }
-    const createCommandInput = table.toCreateCommandInput();
-    expect(createCommandInput).toMatchObject(expectedCommandInput)
-  })
 
-  it('should create database table', async () => {
-    table = new CookbookTable(client);
-    const result = await table.create();
-    expect(result).toHaveProperty('TableDescription');
+    @TableDecorator({
+      name: 'TestTable',
+      primaryKey: {pk: 'pk', sk: 'sk'},
+      entity: TestEntity
+    })
+    class TestTable extends Table {}
+
+    it('should output CreateCommandInput', () => {
+      const expectedCommandInput = {
+        TableName: 'Cookbooks',
+        AttributeDefinitions: [
+          { AttributeName: 'title', AttributeType: 'S' },
+          { AttributeName: 'author', AttributeType: 'S' }
+        ],
+        KeySchema: [
+          { AttributeName: 'title', KeyType: 'HASH' },
+          { AttributeName: 'author', KeyType: 'RANGE' }
+        ],
+        ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
+      }
+      const createCommandInput = table.toCreateCommandInput();
+      expect(createCommandInput).toMatchObject(expectedCommandInput)
+    })
+
+    it('should create database table', async () => {
+      table = new CookbookTable(client);
+      const result = await table.create();
+      expect(result).toHaveProperty('TableDescription');
+    })
+
+    it('should create database table if not exists', async () => {
+      table = new TestTable(client);
+      const result = await table.create('IF_NOT_EXISTS');
+      expect(result).toHaveProperty('TableDescription');
+    })
   })
 
   it('should getPrimaryKeyDefinition', () => {
