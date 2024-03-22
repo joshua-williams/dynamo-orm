@@ -158,23 +158,23 @@ export default class QueryBuilder {
     const input: ExecuteStatementCommandInput = {Statement};
     const command = new ExecuteStatementCommand(input);
     try {
-      const r = await this.db.getClient().send(command);
-      console.log(r)
+      await this.db.getClient().send(command);
     } catch (e) {
       throw new QueryException(e.message);
     }
   }
 
   private toSelectStatementCommandInput(): ExecuteStatementCommandInput {
-    let Statement = 'SELECT';
+    const input: ExecuteStatementCommandInput = {
+      Statement: 'SELECT'
+    }
     if (!this.query.table) {
       throw new QueryException('table name must be set in select query. use query.table(tableName) before query.fetch')
     }
     const attributes = this.query.attributes.length ? this.query.attributes.join(', ') : '*'
-    Statement += ` ${attributes} FROM ${this.query.table.getName()} `
-    if (this.query.conditions.length) Statement += '\nWHERE\n'
-    Statement+= this.toInputConditions();
-    const input:ExecuteStatementCommandInput = { Statement };
+    input.Statement += ` ${attributes} FROM ${this.query.table.getName()} `
+    if (this.query.conditions.length) input.Statement += '\nWHERE\n'
+    input.Statement+= this.toInputConditions();
     if (this.query.limit) input.Limit = this.query.limit;
     return input;
   }
