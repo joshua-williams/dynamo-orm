@@ -80,7 +80,8 @@ export type ModelOptions = {
 }
 
 export type DynamormIoC = {
-  createTables: () => Promise<CreateTableCommandOutput[]>,
+  createTables: (options?: CreateTableOption) => Promise<CreateTableCommandOutput[]>,
+  deleteTables: () => Promise<void>,
   getClient: () => DynamoDBClient,
   getTable: (tableName: string) => TableConstructor,
   getTables: () => TableConstructor[],

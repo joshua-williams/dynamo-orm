@@ -4,6 +4,7 @@ import Model from "../src/model";
 
 const config = {endpoint: 'http://localhost:8000'};
 const client = new DynamoDBClient(config);
+
 describe('model', () => {
   let model: any;
 
@@ -140,7 +141,7 @@ describe('model', () => {
     it('should save', async () => {
       model.fill({
         title: "Southern Savories",
-        author: 'com.joshua360@gmail.com',
+        author: 'dev@studiowebfx.com',
         image: ['logo.png']
       });
       const result = await model.save();
@@ -150,10 +151,10 @@ describe('model', () => {
 
   describe('find', () => {
     it('should get item by primary key', async () => {
-      const result = await model.find('Southern Savories','com.joshua360@gmail.com');
+      const result = await model.find('Southern Savories','dev@studiowebfx.com');
       expect(result).toBeInstanceOf(Model)
       expect(result.title).toEqual('Southern Savories')
-      expect(result.author).toEqual('com.joshua360@gmail.com')
+      expect(result.author).toEqual('dev@studiowebfx.com')
     })
   })
 
@@ -161,10 +162,10 @@ describe('model', () => {
     it('should delete item by primary key', async () => {
       await model.fill({
         title: 'Southern Savories',
-        author: 'com.joshua360@gmail.com',
+        author: 'dev@studiowebfx.com',
         image: ['image.png']
       }).save();
-      const result = await model.delete('Southern Savories','com.joshua360@gmail.com');
+      const result = await model.delete('Southern Savories','dev@studiowebfx.com');
       expect(result).toBe(true);
     })
   })
@@ -172,10 +173,10 @@ describe('model', () => {
   describe('update', () => {
     it('should update item', async () => {
       model.fill({
-        title: 'Southern Smothered',
+        title: 'Southern Crunch',
         author: 'dev@studiowebfx.com',
         description: 'Another Cookbook',
-        image: ["http://images.com/logo.png", "http://images.com/logo2.png"]
+        image: ["logo.png", "logo2.png"]
       })
       const updateModel = async () => await model.update();
       expect(updateModel).not.toThrow()

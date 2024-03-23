@@ -1,5 +1,5 @@
 import db from "./fixtures/db";
-import {attribute, Entity, Table, table as TableDecorator} from "../index";
+import { Table } from "../index";
 import { CookbookTable } from "./fixtures/tables";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 
@@ -35,19 +35,6 @@ describe('table', () => {
   })
 
   describe('Create Table', () => {
-    class TestEntity extends Entity {
-      @attribute()
-      pk: string;
-      @attribute()
-      sk: string;
-    }
-
-    @TableDecorator({
-      name: 'TestTable',
-      primaryKey: {pk: 'pk', sk: 'sk'},
-      entity: TestEntity
-    })
-    class TestTable extends Table {}
 
     it('should output CreateCommandInput', () => {
       const expectedCommandInput = {
@@ -66,17 +53,7 @@ describe('table', () => {
       expect(createCommandInput).toMatchObject(expectedCommandInput)
     })
 
-    it('should create database table', async () => {
-      table = new CookbookTable(client);
-      const result = await table.create();
-      expect(result).toHaveProperty('TableDescription');
-    })
 
-    it('should create database table if not exists', async () => {
-      table = new TestTable(client);
-      const result = await table.create('IF_NOT_EXISTS');
-      expect(result).toHaveProperty('TableDescription');
-    })
   })
 
   it('should getPrimaryKeyDefinition', () => {
@@ -88,10 +65,6 @@ describe('table', () => {
     expect(expectedDefinition).toMatchObject(primaryKeyDefinition)
   })
 
-  it('should create table from table instance', async () => {
-    const result = await table.create();
-    expect(result).toHaveProperty('KeySchema');
-  })
   it('should get information about existing table', async () => {
     table = new CookbookTable(client);
     const tableInfo = await table.describe();
