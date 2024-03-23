@@ -2,8 +2,12 @@
   "name": "dynamorm",
   "version": "1.0.0",
   "description": "DynamoRM is an object-relational mapper (ORM) for interacting with DynamoDB.",
-  "main": "index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["/dist"],
   "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc -w",
     "test": "jest",
     "test:watch": "jest --watch",
     "start": "docker compose up"
