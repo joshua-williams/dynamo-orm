@@ -11,6 +11,6 @@ const configuration = process.env.ENVIRONMENT == 'local' ? {endpoint: "http://lo
   tables: [AuthorTable, CookbookTable, RecipeTable],
   models: [CookbookModel, AuthorModel]
 })
-class DB {}
+export class DB {}
 
 export default DynamormFactory.create(DB)

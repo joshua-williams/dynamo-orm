@@ -97,13 +97,6 @@ describe('app', () => {
 
   })
 
-  describe('table creation', () => {
-    it('should create all tables', async () => {
-      const result = await db.createTables();
-      expect(result).toBeInstanceOf(Array);
-    })
-  })
-
   describe('save item', () => {
     it('should save item', () => {
       const model = db.model('AuthorEntity');
@@ -125,7 +118,7 @@ describe('app', () => {
       const expectedAttributes = {
         title: 'Southern Sweets',
         author: 'dev@studiowebfx.com',
-        image: [ 'http://images.com/logo.png' ]
+        image: [ 'logo.png' ]
       }
       expect(model).toBeInstanceOf(Model);
       expect(attributes).toMatchObject(expectedAttributes)

@@ -1,10 +1,16 @@
 import {CreateTableOption, EntityConstructor, PrimaryKey, PrimaryKeyDefinition} from "./types";
 import {
   CreateTableCommand,
-  CreateTableCommandInput, CreateTableCommandOutput, DescribeTableCommand, DescribeTableCommandOutput,
+  CreateTableCommandInput,
+  CreateTableCommandOutput, DeleteTableCommand,
+  DeleteTableCommandInput,
+  DescribeTableCommand,
+  DescribeTableCommandOutput,
   DynamoDBClient,
   KeySchemaElement,
-  KeyType, ResourceInUseException, ResourceNotFoundException
+  KeyType,
+  ResourceInUseException,
+  ResourceNotFoundException
 } from "@aws-sdk/client-dynamodb";
 import {DynamormException, PrimaryKeyException} from "./exceptions";
 
@@ -147,9 +153,16 @@ export default class Table {
     return Key;
   }
 
-  public async createIfNotExists() {
-
+  public async exists(): Promise<boolean> {
+    let tableInfo: DescribeTableCommandOutput;
+    try {
+      tableInfo = await this.describe();
+    } catch (e) {
+      return true;
+    }
+    return !!tableInfo;
   }
+
   public async create(option?: CreateTableOption) {
     if (option) {
       const tableDescription = await this.describe();
@@ -174,6 +187,17 @@ export default class Table {
     return response;
   }
 
+  public async delete() {
+    const input: DeleteTableCommandInput = {
+      TableName: this.getName()
+    }
+    const command: DeleteTableCommand = new DeleteTableCommand(input);
+    try {
+      await this.client.send(command);
+    } catch (e) {
+      throw new DynamormException('Failed to delete table ' + this.getName());
+    }
+  }
   /**
    * @description Gets table formation. If table has not been created will return undefined
    */

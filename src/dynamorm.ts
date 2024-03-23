@@ -5,7 +5,7 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import Model from "./model";
 import {Entity} from "../index";
-import {DynamormIoC, EntityConstructor, ModelConstructor, TableConstructor} from "./types";
+import {CreateTableOption, DynamormIoC, EntityConstructor, ModelConstructor, TableConstructor} from "./types";
 import QueryBuilder from './query';
 /**
  * @todo throw error if tables or client is undefined
@@ -50,14 +50,26 @@ export class DynamoRM implements DynamormIoC {
     }
   }
 
-  public async createTables(): Promise<CreateTableCommandOutput[]> {
+  public async createTables(option?: CreateTableOption): Promise<CreateTableCommandOutput[]> {
     const results = [];
     for ( let Constructor of this.tables ) {
       const table = new Constructor(this.client);
+      if (option) {
+        const exists = await table.exists();
+        if (option == 'IF_NOT_EXISTS' && exists) continue;
+        if (option == 'DROP_IF_EXISTS' && exists) await table.delete();
+      }
       const result = await table.create(Constructor)
       results.push(result);
     }
     return results;
+  }
+
+  public async deleteTables() {
+    for (let Constructor of this.tables ) {
+      const table = new Constructor(this.client);
+      await table.delete(Constructor);
+    }
   }
 
   getModels(): Array<ModelConstructor> {

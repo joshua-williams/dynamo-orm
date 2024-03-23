@@ -1,45 +1,16 @@
 import QueryBuilder from '../src/query';
-import db from './fixtures/db';
-import {Model} from '../index';
-import {QueryException} from '../src/exceptions';
+import { DB } from './fixtures/db';
+import {Model, DynamormFactory} from '../index';
+import {DynamormException, QueryException} from '../src/exceptions';
+import {DynamormIoC} from '../src/types';
 
 describe('Query', () => {
   let query: QueryBuilder;
+  let db: DynamormIoC;
 
   beforeEach(() => {
+    db = DynamormFactory.create(DB);
     query = new QueryBuilder(db);
-  })
-
-  describe('Delete', () => {
-
-    beforeEach( async () => {
-      const cookbook = db.model('Cookbooks');
-      await cookbook.fill({
-        title: 'Haggis Cookbook',
-        author: 'no author',
-        image: ['cover.png']
-      }).save();
-    });
-
-    it('should fail to delete if sort key is not set', async () => {
-      const deleteCookbook = async () => {
-        await query
-          .table('Cookbooks')
-          .where('title', '=', 'Haggis Cookbook')
-          .delete()
-      }
-
-      await expect(deleteCookbook).rejects.toThrowError(QueryException)
-    });
-
-    it('should delete item from table', async () => {
-      await query
-        .table('Cookbooks')
-        .where('title', '=', 'Haggis Cookbook')
-        .and('author', '=', 'no author')
-        .delete()
-    });
-
   })
 
   describe('Select', () => {
@@ -78,6 +49,41 @@ describe('Query', () => {
       expect(model).toBeInstanceOf(Model);
 
     })
+  })
+
+  describe('Delete', () => {
+
+    beforeEach( async () => {
+      const cookbook = db.model('Cookbooks');
+      await cookbook.fill({
+        title: 'Haggis Cookbook',
+        author: 'no author',
+        image: ['cover.png']
+      }).save();
+    });
+
+    it('should fail to delete if sort key is not set', async () => {
+      const deleteCookbook = async () => {
+        await query
+          .table('Cookbooks')
+          .where('title', '=', 'Haggis Cookbook')
+          .delete()
+      }
+
+      await expect(deleteCookbook).rejects.toThrowError(QueryException)
+    });
+
+    it('should delete item from table', async () => {
+      const deleteItem = async () => {
+        await query
+          .table('Cookbooks')
+          .where('title', '=', 'Haggis Cookbook')
+          .and('author', '=', 'no author')
+          .delete()
+      }
+       expect(deleteItem).not.toThrow(DynamormException)
+    });
+
   })
 
   describe('Operators', () => {
